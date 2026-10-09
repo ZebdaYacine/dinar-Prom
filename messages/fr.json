@@ -1,0 +1,356 @@
+{
+  "meta": {
+    "locale": "fr",
+    "languageName": "Français",
+    "flag": "FR",
+    "direction": "ltr"
+  },
+  "brand": {
+    "name": "Dinar DZ",
+    "nameArabic": "دينار",
+    "tagline": "Toutes les réductions de votre ville au même endroit",
+    "verifiedMerchant": "Commerçant vérifié",
+    "advertisement": "Publicité"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "continue": "Continuer",
+    "confirm": "Confirmer",
+    "retry": "Réessayer",
+    "search": "Rechercher",
+    "clear": "Effacer",
+    "remove": "Supprimer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "submit": "Envoyer",
+    "seeAll": "Tout voir",
+    "noResults": "Aucun résultat",
+    "optional": "Facultatif",
+    "required": "Obligatoire",
+    "showMore": "Afficher plus",
+    "showLess": "Afficher moins",
+    "copyLink": "Copier le lien",
+    "copied": "Lien copié",
+    "today": "Aujourd’hui",
+    "yesterday": "Hier",
+    "days": "jours",
+    "hours": "heures",
+    "minutes": "minutes",
+    "seconds": "secondes"
+  },
+  "language": {
+    "label": "Langue",
+    "arabic": "العربية",
+    "french": "Français",
+    "switchToArabic": "Passer à l’arabe",
+    "switchToFrench": "Passer au français"
+  },
+  "theme": {
+    "label": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "switchToLight": "Passer au thème clair",
+    "switchToDark": "Passer au thème sombre"
+  },
+  "nav": {
+    "home": "Accueil",
+    "offers": "Offres",
+    "categories": "Catégories",
+    "wilaya": "Wilaya",
+    "shop": "Commerce",
+    "account": "Mon compte",
+    "dashboard": "Tableau de bord",
+    "publishOffer": "Publier une offre",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "admin": "Administration"
+  },
+  "header": {
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "openSearch": "Ouvrir la recherche",
+    "notifications": "Notifications",
+    "unreadNotifications": "Vous avez {count} notification(s) non lue(s)",
+    "selectWilaya": "Choisir une wilaya",
+    "welcome": "Bonjour, {name}"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAsRead": "Marquer comme lue",
+    "markAllAsRead": "Tout marquer comme lu",
+    "empty": "Aucune nouvelle notification",
+    "loadError": "Impossible de charger les notifications",
+    "merchantApproved": "Votre compte commerçant a été approuvé.",
+    "merchantRejected": "Votre demande de vérification doit être modifiée.",
+    "offerApproved": "Votre offre a été approuvée et est visible.",
+    "offerRejected": "Votre offre a été refusée. Consultez le motif.",
+    "paymentConfirmed": "Votre paiement est confirmé et votre abonnement est actif.",
+    "accessEnding": "Votre accès expire dans {days} jours.",
+    "newReport": "Un nouveau signalement doit être examiné."
+  },
+  "search": {
+    "placeholder": "Rechercher une offre, un commerce ou une catégorie...",
+    "submit": "Lancer la recherche",
+    "resultsFor": "Résultats pour : {query}",
+    "noResults": "Aucune offre correspondante",
+    "noResultsHint": "Essayez une autre wilaya ou retirez un filtre.",
+    "filters": "Filtrer",
+    "activeFilters": "Filtres appliqués",
+    "clearFilters": "Effacer les filtres",
+    "showResults": "Afficher {count} résultat(s)"
+  },
+  "offers": {
+    "title": "Offres",
+    "latest": "Dernières offres",
+    "endingSoon": "Se terminent bientôt",
+    "topDiscounts": "Meilleures réductions",
+    "allOffers": "Toutes les offres",
+    "card": {
+      "discount": "- {percent}%",
+      "featured": "À la une",
+      "endsIn": "Se termine dans {time}",
+      "expired": "Offre expirée",
+      "noPrice": "Réduction spéciale",
+      "coverAlt": "Image de l’offre {title}"
+    },
+    "filters": {
+      "wilaya": "Wilaya",
+      "category": "Catégorie",
+      "minDiscount": "Réduction minimale",
+      "endingWithin": "Se termine dans",
+      "anyTime": "À tout moment",
+      "24Hours": "24 heures",
+      "7Days": "7 jours",
+      "sort": "Trier par",
+      "newest": "Plus récentes",
+      "endingSoon": "Expiration la plus proche",
+      "discount": "Réduction la plus élevée",
+      "priceAsc": "Prix croissant"
+    },
+    "detail": {
+      "description": "Description de l’offre",
+      "validFrom": "Valable à partir du",
+      "validUntil": "Valable jusqu’au",
+      "similar": "Offres similaires",
+      "notAvailable": "Cette offre n’est plus disponible",
+      "notAvailableHint": "Découvrez plutôt ces offres similaires.",
+      "galleryAlt": "Image {position} sur {total} de l’offre {title}"
+    },
+    "actions": {
+      "contactWhatsapp": "Contacter sur WhatsApp",
+      "call": "Appeler",
+      "share": "Partager",
+      "report": "Signaler l’offre",
+      "openShop": "Toutes les offres du commerce"
+    },
+    "report": {
+      "title": "Signaler une offre",
+      "reason": "Motif du signalement",
+      "message": "Message complémentaire",
+      "messagePlaceholder": "Ajoutez des détails si nécessaire...",
+      "reasons": {
+        "misleading": "Informations trompeuses",
+        "expired": "Offre expirée",
+        "wrongPrice": "Prix incorrect",
+        "inappropriate": "Contenu inapproprié",
+        "other": "Autre motif"
+      },
+      "success": "Signalement reçu, merci de votre aide.",
+      "error": "Impossible d’envoyer le signalement. Réessayez plus tard."
+    }
+  },
+  "shop": {
+    "offers": "Offres du commerce",
+    "address": "Adresse",
+    "phone": "Téléphone",
+    "socialLinks": "Réseaux sociaux",
+    "notFound": "Commerce introuvable",
+    "noOffers": "Aucune offre active pour ce commerce actuellement"
+  },
+  "auth": {
+    "title": "Connexion",
+    "continueWithGoogle": "Continuer avec Google",
+    "merchantPrompt": "Vous êtes commerçant ? Publiez vos offres et atteignez les clients de votre ville.",
+    "oauthError": "Connexion impossible. Réessayez.",
+    "unverifiedEmail": "Votre adresse Google doit être vérifiée.",
+    "loggedOut": "Vous êtes déconnecté"
+  },
+  "onboarding": {
+    "title": "Créer votre profil commerçant",
+    "steps": {
+      "personal": "Informations personnelles",
+      "shop": "Informations du commerce",
+      "documents": "Documents de vérification",
+      "review": "Vérification et envoi"
+    },
+    "personal": {
+      "fullName": "Nom complet",
+      "phone": "Numéro de téléphone",
+      "wilaya": "Wilaya",
+      "address": "Adresse"
+    },
+    "shop": {
+      "name": "Nom du commerce",
+      "category": "Catégorie principale",
+      "description": "Description du commerce",
+      "logo": "Logo du commerce",
+      "municipality": "Commune",
+      "whatsapp": "Numéro WhatsApp",
+      "commercialRegister": "Numéro du registre de commerce",
+      "registerExpiry": "Date d’expiration du registre"
+    },
+    "documents": {
+      "title": "Documents de vérification",
+      "idFront": "Carte d’identité — recto",
+      "idBack": "Carte d’identité — verso",
+      "commercialRegister": "Registre de commerce",
+      "upload": "Téléverser le document",
+      "replace": "Remplacer le document",
+      "privacy": "Vos documents sont utilisés uniquement pour vérifier votre identité de commerçant.",
+      "accepted": "JPG, PNG, WebP ou PDF, 8 Mo maximum"
+    },
+    "review": {
+      "title": "Vérifiez vos informations",
+      "consent": "J’accepte le traitement de mes documents selon la politique de confidentialité.",
+      "submit": "Envoyer pour vérification",
+      "submitted": "Votre demande est en cours d’examen",
+      "rejectionReason": "Motif du refus"
+    }
+  },
+  "merchant": {
+    "dashboard": "Tableau de bord commerçant",
+    "overview": "Vue d’ensemble",
+    "myOffers": "Mes offres",
+    "myShop": "Mon commerce",
+    "billing": "Abonnement et paiement",
+    "stats": "Statistiques",
+    "status": {
+      "incomplete": "Incomplet",
+      "pending": "En cours d’examen",
+      "approved": "Approuvé",
+      "rejected": "Refusé",
+      "suspended": "Suspendu",
+      "trialing": "Période d’essai",
+      "subscribed": "Abonnement actif",
+      "expired": "Expiré"
+    },
+    "offer": {
+      "new": "Créer une offre",
+      "edit": "Modifier l’offre",
+      "title": "Titre de l’offre",
+      "description": "Description de l’offre",
+      "category": "Catégorie",
+      "priceBefore": "Prix avant réduction",
+      "priceAfter": "Prix après réduction",
+      "discountPercent": "Pourcentage de réduction",
+      "startsAt": "Date de début",
+      "endsAt": "Date de fin",
+      "address": "Adresse de l’offre",
+      "saveDraft": "Enregistrer le brouillon",
+      "sendReview": "Envoyer pour examen",
+      "pause": "Mettre en pause",
+      "archive": "Archiver",
+      "duplicate": "Dupliquer l’offre",
+      "editWarning": "L’offre sera masquée jusqu’à une nouvelle validation.",
+      "autosaved": "Enregistré automatiquement à {time}"
+    },
+    "stats": {
+      "activeOffers": "Offres actives",
+      "views": "Vues",
+      "whatsappClicks": "Clics WhatsApp",
+      "last30Days": "30 derniers jours",
+      "noData": "Pas encore assez de données"
+    }
+  },
+  "billing": {
+    "title": "Abonnement et paiement",
+    "trialRemaining": "Il vous reste {days} jours d’essai",
+    "subscriptionUntil": "Votre abonnement est actif jusqu’au {date}",
+    "annualPlan": "Abonnement annuel",
+    "annualPrice": "4 000 DZD / an",
+    "payOnline": "Paiement en ligne",
+    "payWithChargily": "Payer avec Chargily",
+    "manualPayment": "Paiement manuel",
+    "uploadProof": "Téléverser la preuve de virement",
+    "proofReference": "Référence de l’opération",
+    "underReview": "Votre paiement est en cours de vérification",
+    "pendingConfirmation": "Paiement en cours de confirmation",
+    "paid": "Paiement confirmé",
+    "failed": "Paiement échoué",
+    "canceled": "Paiement annulé",
+    "paymentHistory": "Historique des paiements",
+    "subscriptionHidden": "Vos offres sont masquées car votre accès a expiré.",
+    "renew": "Renouveler maintenant"
+  },
+  "admin": {
+    "title": "Administration",
+    "dashboard": "Indicateurs",
+    "merchants": "Commerçants",
+    "offers": "Examen des offres",
+    "payments": "Paiements",
+    "categories": "Catégories",
+    "ads": "Publicités",
+    "reports": "Signalements",
+    "settings": "Paramètres",
+    "auditLogs": "Journal d’audit",
+    "actions": {
+      "approve": "Approuver",
+      "reject": "Refuser",
+      "suspend": "Suspendre",
+      "reactivate": "Réactiver",
+      "remove": "Retirer",
+      "resolve": "Résoudre le signalement"
+    },
+    "reasonRequired": "Le motif de l’action est obligatoire",
+    "queueEmpty": "Aucun élément en attente",
+    "documentWarning": "Document sensible. Chaque ouverture est enregistrée dans l’audit.",
+    "metrics": {
+      "newMerchants": "Nouveaux commerçants",
+      "pendingRequests": "Demandes en attente",
+      "activeOffers": "Offres actives",
+      "monthlyRevenue": "Revenus du mois"
+    }
+  },
+  "splash": {
+    "loading": "Préparation du site...",
+    "branding": "Préparation de l’identité",
+    "page": "Préparation de la page",
+    "ready": "Le site est prêt",
+    "retry": "Réessayer",
+    "proverb": "Toutes les réductions de votre ville au même endroit"
+  },
+  "errors": {
+    "generic": "Une erreur inattendue s’est produite.",
+    "network": "Vérifiez votre connexion Internet et réessayez.",
+    "unauthorized": "Votre session a expiré. Connectez-vous à nouveau.",
+    "forbidden": "Vous n’êtes pas autorisé à effectuer cette action.",
+    "notFound": "La page ou l’élément est introuvable.",
+    "gone": "Cette offre n’est plus disponible.",
+    "rateLimited": "Trop de tentatives. Attendez un peu avant de réessayer.",
+    "requestId": "Numéro de requête : {id}"
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire",
+    "invalidPhone": "Saisissez un numéro algérien valide",
+    "invalidEmail": "Saisissez une adresse e-mail valide",
+    "tooShort": "Le texte est trop court",
+    "tooLong": "La limite autorisée est dépassée",
+    "invalidPrice": "Vérifiez les prix et le pourcentage de réduction",
+    "invalidDates": "La date de fin doit être après la date de début",
+    "fileTooLarge": "Le fichier dépasse la taille autorisée",
+    "fileType": "Ce type de fichier n’est pas autorisé",
+    "imageTooSmall": "Image trop petite ; minimum 400×400"
+  },
+  "footer": {
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions générales",
+    "contact": "Nous contacter",
+    "copyright": "© {year} Dinar DZ. Tous droits réservés."
+  }
+}

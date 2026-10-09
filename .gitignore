@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+
+# Local runtime data
+backups/
+secrets/*.pem
+node_modules/
+dist/
+.next/
+*.tsbuildinfo

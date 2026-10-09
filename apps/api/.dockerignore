@@ -1,0 +1,7 @@
+.git
+tmp
+coverage
+backups
+*.log
+.env*
+!.env.example

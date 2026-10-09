@@ -1,0 +1,2 @@
+p, admin, /api/v1/admin/*, *
+p, merchant, /api/v1/merchant/*, *

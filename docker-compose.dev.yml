@@ -1,0 +1,201 @@
+name: dinar-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dinar}
+      POSTGRES_USER: ${POSTGRES_USER:-dinar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    ports:
+      - "127.0.0.1:5543:5432"
+    volumes:
+      - dinar-dev-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: >-
+      sh -c 'if [ -n "$${REDIS_PASSWORD}" ]; then
+      exec redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}";
+      else exec redis-server --appendonly yes; fi'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    ports:
+      - "127.0.0.1:6381:6379"
+    volumes:
+      - dinar-dev-redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli $${REDIS_PASSWORD:+-a $$REDIS_PASSWORD} ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+    ports:
+      - "127.0.0.1:9100:9000"
+      - "127.0.0.1:9101:9001"
+    volumes:
+      - dinar-dev-minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    restart: "no"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?MINIO_ACCESS_KEY is required}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?MINIO_SECRET_KEY is required}
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./docker/minio/app-policy.json:/config/app-policy.json:ro
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"
+        mc mb --ignore-existing local/dinar-public
+        mc mb --ignore-existing local/dinar-private
+        mc anonymous set download local/dinar-public
+        mc admin policy create local dinar-app-policy /config/app-policy.json || true
+        mc admin user add local "$${MINIO_ACCESS_KEY}" "$${MINIO_SECRET_KEY}" || true
+        mc admin policy attach local dinar-app-policy --user "$${MINIO_ACCESS_KEY}"
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: ../../docker/api.Dockerfile
+      target: development
+    restart: unless-stopped
+    env_file:
+      - ${SHARED_ENV_FILE:-.env}
+    environment:
+      APP_ENV: development
+      API_ADDR: :8080
+      JWT_PRIVATE_KEY_FILE: /run/secrets/jwt_private_key
+      JWT_PUBLIC_KEY_FILE: /run/secrets/jwt_public_key
+      DATABASE_URL: ${DATABASE_URL:-postgres://dinar:dinar@postgres:5432/dinar?sslmode=disable}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_USE_SSL: "false"
+    ports:
+      - "8188:8080"
+    secrets:
+      - jwt_private_key
+      - jwt_public_key
+    volumes:
+      - ./apps/api:/src
+      - dinar-dev-go-cache:/go/pkg/mod
+      - dinar-dev-go-build:/root/.cache/go-build
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    command: ["go", "run", "./cmd/api"]
+
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: ../../docker/api.Dockerfile
+      target: development
+    restart: unless-stopped
+    env_file:
+      - ${SHARED_ENV_FILE:-.env}
+    environment:
+      APP_ENV: development
+      JWT_PRIVATE_KEY_FILE: /run/secrets/jwt_private_key
+      JWT_PUBLIC_KEY_FILE: /run/secrets/jwt_public_key
+      DATABASE_URL: ${DATABASE_URL:-postgres://dinar:dinar@postgres:5432/dinar?sslmode=disable}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_USE_SSL: "false"
+    volumes:
+      - ./apps/api:/src
+      - dinar-dev-go-cache:/go/pkg/mod
+      - dinar-dev-go-build:/root/.cache/go-build
+    secrets:
+      - jwt_private_key
+      - jwt_public_key
+    depends_on:
+      api:
+        condition: service_started
+    command: ["go", "run", "./cmd/api", "worker"]
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: ../../docker/web.Dockerfile
+      target: development
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      API_INTERNAL_URL: ${API_INTERNAL_URL:-http://api:8080}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:8180}
+      NEXT_PUBLIC_MEDIA_BASE_URL: ${NEXT_PUBLIC_MEDIA_BASE_URL:-http://localhost:9100/dinar-public}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-}
+      NOTIFICATIONS_WS_PATH: ${NOTIFICATIONS_WS_PATH:-/api/v1/ws/notifications}
+    ports:
+      - "3143:3000"
+    volumes:
+      - ./apps/web:/app
+      - dinar-dev-node-modules:/app/node_modules
+      - dinar-dev-next:/app/.next
+    depends_on:
+      api:
+        condition: service_started
+    command: ["pnpm", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "8180:80"
+      - "8443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      - dinar-dev-caddy-data:/data
+      - dinar-dev-caddy-config:/config
+    depends_on:
+      api:
+        condition: service_started
+      web:
+        condition: service_started
+
+volumes:
+  dinar-dev-postgres:
+  dinar-dev-redis:
+  dinar-dev-minio:
+  dinar-dev-go-cache:
+  dinar-dev-go-build:
+  dinar-dev-node-modules:
+  dinar-dev-next:
+  dinar-dev-caddy-data:
+  dinar-dev-caddy-config:
+
+secrets:
+  jwt_private_key:
+    file: ./secrets/jwt_private.pem
+  jwt_public_key:
+    file: ./secrets/jwt_public.pem

@@ -1,0 +1,60 @@
+{
+  "header": {
+    "navigation": "Navigation principale",
+    "home": "Accueil",
+    "offers": "Offres",
+    "login": "Connexion",
+    "arabic": "العربية",
+    "french": "Français",
+    "openMenu": "Ouvrir le menu"
+  },
+  "nav": {
+    "home": "Accueil",
+    "offers": "Offres",
+    "wilaya": "Wilaya",
+    "account": "Mon compte",
+    "login": "Connexion",
+    "publishOffer": "Publier une offre"
+  },
+  "home": {
+    "title": "Découvrez les meilleures réductions de votre ville",
+    "description": "Parcourez les offres de commerçants vérifiés et contactez-les directement sur WhatsApp.",
+    "browseOffers": "Parcourir les offres",
+    "merchantLogin": "Connexion commerçant",
+    "cardLabel": "Identité Dinar DZ",
+    "cardTitle": "Des offres locales et fiables",
+    "cardText": "Trouvez facilement les réductions près de chez vous.",
+    "announcement": "De nouvelles offres de commerçants algériens chaque jour",
+    "latest": "Dernières offres",
+    "endingSoon": "Se terminent bientôt",
+    "categories": "Catégories",
+    "seeAll": "Tout voir"
+  },
+  "offers": {
+    "title": "Toutes les offres",
+    "subtitle": "Découvrez les réductions actuelles des commerçants vérifiés près de chez vous.",
+    "emptyTitle": "Aucune offre correspondante",
+    "emptyText": "Essayez de modifier les filtres ou votre recherche.",
+    "results": "{count} offre(s)",
+    "next": "Suivant",
+    "back": "Retour aux offres",
+    "validFrom": "Valable à partir du",
+    "validUntil": "Valable jusqu’au",
+    "address": "Adresse",
+    "similar": "Offres similaires"
+  },
+  "splash": {
+    "loading": "Préparation du site...",
+    "branding": "Préparation de l’identité",
+    "page": "Préparation de la page",
+    "ready": "Le site est prêt",
+    "retry": "Réessayer",
+    "proverb": "Toutes les réductions de votre ville au même endroit"
+  },
+  "footer": {
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions générales",
+    "contact": "Nous contacter",
+    "copyright": "© {year} Dinar DZ. Tous droits réservés."
+  }
+}

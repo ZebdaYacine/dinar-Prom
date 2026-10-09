@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Dinar DZ</title>
+  <desc id="desc">Circular forest-green coin with a gold Amazigh Yaz symbol</desc>
+  <circle cx="64" cy="64" r="58" fill="#123D2D" stroke="#E6B94F" stroke-width="4"/>
+  <circle cx="64" cy="64" r="48" fill="none" stroke="#E6B94F" stroke-width="2" opacity=".9"/>
+  <path d="M39 45h50M64 45v38M39 83h50M39 45l25 20 25-20M39 83l25-20 25 20" fill="none" stroke="#E6B94F" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+</svg>

@@ -1,0 +1,356 @@
+{
+  "meta": {
+    "locale": "ar",
+    "languageName": "العربية",
+    "flag": "DZ",
+    "direction": "rtl"
+  },
+  "brand": {
+    "name": "Dinar DZ",
+    "nameArabic": "دينار",
+    "tagline": "كل تخفيضات مدينتك في مكان واحد",
+    "verifiedMerchant": "تاجر موثّق",
+    "advertisement": "إعلان"
+  },
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "continue": "متابعة",
+    "confirm": "تأكيد",
+    "retry": "إعادة المحاولة",
+    "search": "بحث",
+    "clear": "مسح",
+    "remove": "إزالة",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "submit": "إرسال",
+    "seeAll": "عرض الكل",
+    "noResults": "لا توجد نتائج",
+    "optional": "اختياري",
+    "required": "إلزامي",
+    "showMore": "عرض المزيد",
+    "showLess": "عرض أقل",
+    "copyLink": "نسخ الرابط",
+    "copied": "تم نسخ الرابط",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "days": "أيام",
+    "hours": "ساعات",
+    "minutes": "دقائق",
+    "seconds": "ثوانٍ"
+  },
+  "language": {
+    "label": "اللغة",
+    "arabic": "العربية",
+    "french": "Français",
+    "switchToArabic": "التبديل إلى العربية",
+    "switchToFrench": "التبديل إلى الفرنسية"
+  },
+  "theme": {
+    "label": "المظهر",
+    "light": "فاتح",
+    "dark": "داكن",
+    "switchToLight": "التبديل إلى الوضع الفاتح",
+    "switchToDark": "التبديل إلى الوضع الداكن"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "offers": "العروض",
+    "categories": "الأصناف",
+    "wilaya": "الولاية",
+    "shop": "المحل",
+    "account": "حسابي",
+    "dashboard": "لوحة التحكم",
+    "publishOffer": "انشر عرضك",
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "admin": "الإدارة"
+  },
+  "header": {
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "openSearch": "فتح البحث",
+    "notifications": "الإشعارات",
+    "unreadNotifications": "لديك {count} إشعار غير مقروء",
+    "selectWilaya": "اختر الولاية",
+    "welcome": "مرحباً، {name}"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "markAsRead": "تعليم كمقروء",
+    "markAllAsRead": "تعليم الكل كمقروء",
+    "empty": "لا توجد إشعارات جديدة",
+    "loadError": "تعذر تحميل الإشعارات",
+    "merchantApproved": "تم قبول حسابك كتاجر.",
+    "merchantRejected": "يحتاج طلب التوثيق إلى تعديل.",
+    "offerApproved": "تم قبول عرضك وأصبح جاهزاً للظهور.",
+    "offerRejected": "تم رفض العرض. راجع السبب وأعد التعديل.",
+    "paymentConfirmed": "تم تأكيد دفعتك وتفعيل اشتراكك.",
+    "accessEnding": "سينتهي وصولك خلال {days} يوماً.",
+    "newReport": "يوجد بلاغ جديد يحتاج إلى مراجعة."
+  },
+  "search": {
+    "placeholder": "ابحث عن عرض أو محل أو صنف...",
+    "submit": "تنفيذ البحث",
+    "resultsFor": "نتائج البحث عن: {query}",
+    "noResults": "لا توجد عروض مطابقة",
+    "noResultsHint": "جرّب تغيير الولاية أو إزالة أحد الفلاتر.",
+    "filters": "تصفية",
+    "activeFilters": "الفلاتر المطبقة",
+    "clearFilters": "مسح الفلاتر",
+    "showResults": "عرض {count} نتيجة"
+  },
+  "offers": {
+    "title": "العروض",
+    "latest": "أحدث العروض",
+    "endingSoon": "ينتهي قريباً",
+    "topDiscounts": "أعلى التخفيضات",
+    "allOffers": "كل العروض",
+    "card": {
+      "discount": "خصم {percent}%",
+      "featured": "مميز",
+      "endsIn": "ينتهي خلال {time}",
+      "expired": "انتهى العرض",
+      "noPrice": "تخفيض خاص",
+      "coverAlt": "صورة عرض {title}"
+    },
+    "filters": {
+      "wilaya": "الولاية",
+      "category": "الصنف",
+      "minDiscount": "أدنى تخفيض",
+      "endingWithin": "ينتهي خلال",
+      "anyTime": "أي وقت",
+      "24Hours": "24 ساعة",
+      "7Days": "7 أيام",
+      "sort": "ترتيب حسب",
+      "newest": "الأحدث",
+      "endingSoon": "الأقرب انتهاءً",
+      "discount": "أعلى تخفيض",
+      "priceAsc": "الأقل سعراً"
+    },
+    "detail": {
+      "description": "وصف العرض",
+      "validFrom": "يبدأ في",
+      "validUntil": "ينتهي في",
+      "similar": "عروض مشابهة",
+      "notAvailable": "هذا العرض لم يعد متاحاً",
+      "notAvailableHint": "تصفح هذه العروض المشابهة بدلاً منه.",
+      "galleryAlt": "صورة {position} من {total} للعرض {title}"
+    },
+    "actions": {
+      "contactWhatsapp": "تواصل عبر واتساب",
+      "call": "اتصال",
+      "share": "مشاركة",
+      "report": "أبلغ عن العرض",
+      "openShop": "كل عروض المحل"
+    },
+    "report": {
+      "title": "الإبلاغ عن عرض",
+      "reason": "سبب البلاغ",
+      "message": "رسالة إضافية",
+      "messagePlaceholder": "اكتب تفاصيل اختيارية...",
+      "reasons": {
+        "misleading": "معلومات مضللة",
+        "expired": "العرض منتهٍ",
+        "wrongPrice": "السعر غير صحيح",
+        "inappropriate": "محتوى غير مناسب",
+        "other": "سبب آخر"
+      },
+      "success": "تم استلام البلاغ، شكراً لمساعدتنا.",
+      "error": "تعذر إرسال البلاغ. حاول لاحقاً."
+    }
+  },
+  "shop": {
+    "offers": "عروض المحل",
+    "address": "العنوان",
+    "phone": "الهاتف",
+    "socialLinks": "روابط التواصل",
+    "notFound": "المحل غير موجود",
+    "noOffers": "لا توجد عروض نشطة لهذا المحل حالياً"
+  },
+  "auth": {
+    "title": "تسجيل الدخول",
+    "continueWithGoogle": "المتابعة مع Google",
+    "merchantPrompt": "هل أنت تاجر؟ انشر عروضك ووصل إلى زبائن مدينتك.",
+    "oauthError": "تعذر تسجيل الدخول. حاول مرة أخرى.",
+    "unverifiedEmail": "يجب أن يكون بريد Google مؤكداً.",
+    "loggedOut": "تم تسجيل الخروج بنجاح"
+  },
+  "onboarding": {
+    "title": "إنشاء ملف التاجر",
+    "steps": {
+      "personal": "معلوماتك الشخصية",
+      "shop": "معلومات المحل",
+      "documents": "وثائق التفعيل",
+      "review": "المراجعة والإرسال"
+    },
+    "personal": {
+      "fullName": "الاسم الكامل",
+      "phone": "رقم الهاتف",
+      "wilaya": "الولاية",
+      "address": "العنوان"
+    },
+    "shop": {
+      "name": "اسم المحل",
+      "category": "الصنف الرئيسي",
+      "description": "وصف المحل",
+      "logo": "شعار المحل",
+      "municipality": "البلدية",
+      "whatsapp": "رقم واتساب",
+      "commercialRegister": "رقم السجل التجاري",
+      "registerExpiry": "تاريخ انتهاء السجل التجاري"
+    },
+    "documents": {
+      "title": "وثائق التفعيل",
+      "idFront": "بطاقة التعريف — الوجه",
+      "idBack": "بطاقة التعريف — الظهر",
+      "commercialRegister": "السجل التجاري",
+      "upload": "رفع الوثيقة",
+      "replace": "استبدال الوثيقة",
+      "privacy": "نحمي وثائقك ونستخدمها فقط لمراجعة هوية التاجر.",
+      "accepted": "JPG أو PNG أو WebP أو PDF، بحد أقصى 8 ميغابايت"
+    },
+    "review": {
+      "title": "راجع معلوماتك",
+      "consent": "أوافق على معالجة وثائقي لغرض التحقق وفق سياسة الخصوصية.",
+      "submit": "إرسال للمراجعة",
+      "submitted": "طلبك قيد المراجعة",
+      "rejectionReason": "سبب الرفض"
+    }
+  },
+  "merchant": {
+    "dashboard": "لوحة التاجر",
+    "overview": "نظرة عامة",
+    "myOffers": "عروضي",
+    "myShop": "المحل",
+    "billing": "الاشتراك والدفع",
+    "stats": "الإحصائيات",
+    "status": {
+      "incomplete": "غير مكتمل",
+      "pending": "قيد المراجعة",
+      "approved": "مقبول",
+      "rejected": "مرفوض",
+      "suspended": "موقوف",
+      "trialing": "فترة التجربة",
+      "subscribed": "اشتراك ساري",
+      "expired": "منتهٍ"
+    },
+    "offer": {
+      "new": "إنشاء عرض",
+      "edit": "تعديل العرض",
+      "title": "عنوان العرض",
+      "description": "وصف العرض",
+      "category": "الصنف",
+      "priceBefore": "السعر قبل التخفيض",
+      "priceAfter": "السعر بعد التخفيض",
+      "discountPercent": "نسبة التخفيض",
+      "startsAt": "تاريخ البداية",
+      "endsAt": "تاريخ النهاية",
+      "address": "عنوان العرض",
+      "saveDraft": "حفظ كمسودة",
+      "sendReview": "إرسال للمراجعة",
+      "pause": "إيقاف مؤقت",
+      "archive": "أرشفة",
+      "duplicate": "نسخ العرض",
+      "editWarning": "سيُخفى العرض حتى تتم مراجعته من جديد.",
+      "autosaved": "تم الحفظ تلقائياً في {time}"
+    },
+    "stats": {
+      "activeOffers": "العروض النشطة",
+      "views": "المشاهدات",
+      "whatsappClicks": "نقرات واتساب",
+      "last30Days": "آخر 30 يوماً",
+      "noData": "لا توجد بيانات كافية بعد"
+    }
+  },
+  "billing": {
+    "title": "الاشتراك والدفع",
+    "trialRemaining": "باقي لك {days} يوماً من التجربة",
+    "subscriptionUntil": "اشتراكك ساري حتى {date}",
+    "annualPlan": "اشتراك سنوي",
+    "annualPrice": "4000 دج / سنة",
+    "payOnline": "الدفع الإلكتروني",
+    "payWithChargily": "الدفع عبر Chargily",
+    "manualPayment": "الدفع اليدوي",
+    "uploadProof": "رفع إثبات التحويل",
+    "proofReference": "رقم العملية",
+    "underReview": "دفعتك قيد المراجعة",
+    "pendingConfirmation": "جارٍ تأكيد الدفع",
+    "paid": "تم الدفع",
+    "failed": "فشل الدفع",
+    "canceled": "تم إلغاء الدفع",
+    "paymentHistory": "سجل الدفعات",
+    "subscriptionHidden": "عروضك مخفية لأن الوصول منتهٍ.",
+    "renew": "جدّد الآن"
+  },
+  "admin": {
+    "title": "لوحة المدير",
+    "dashboard": "المؤشرات",
+    "merchants": "التجار",
+    "offers": "مراجعة العروض",
+    "payments": "الدفعات",
+    "categories": "الأصناف",
+    "ads": "الإعلانات",
+    "reports": "البلاغات",
+    "settings": "الإعدادات",
+    "auditLogs": "سجل التدقيق",
+    "actions": {
+      "approve": "قبول",
+      "reject": "رفض",
+      "suspend": "تعليق",
+      "reactivate": "إعادة تفعيل",
+      "remove": "إزالة",
+      "resolve": "حل البلاغ"
+    },
+    "reasonRequired": "سبب الإجراء إلزامي",
+    "queueEmpty": "لا توجد عناصر معلقة",
+    "documentWarning": "هذه وثيقة حساسة. فتحها مسجل في سجل التدقيق.",
+    "metrics": {
+      "newMerchants": "تجار جدد",
+      "pendingRequests": "طلبات معلقة",
+      "activeOffers": "عروض نشطة",
+      "monthlyRevenue": "إيرادات الشهر"
+    }
+  },
+  "splash": {
+    "loading": "جاري تجهيز الموقع...",
+    "branding": "تجهيز الهوية",
+    "page": "تجهيز الصفحة",
+    "ready": "الموقع جاهز",
+    "retry": "إعادة المحاولة",
+    "proverb": "كل تخفيضات مدينتك في مكان واحد"
+  },
+  "errors": {
+    "generic": "حدث خطأ غير متوقع.",
+    "network": "تحقق من اتصالك بالإنترنت وحاول مرة أخرى.",
+    "unauthorized": "انتهت جلستك. سجل الدخول من جديد.",
+    "forbidden": "لا تملك صلاحية تنفيذ هذا الإجراء.",
+    "notFound": "الصفحة أو العنصر غير موجود.",
+    "gone": "لم يعد هذا العرض متاحاً.",
+    "rateLimited": "محاولات كثيرة. انتظر قليلاً ثم حاول.",
+    "requestId": "رقم الطلب: {id}"
+  },
+  "validation": {
+    "required": "هذا الحقل إلزامي",
+    "invalidPhone": "أدخل رقم هاتف جزائرياً صحيحاً",
+    "invalidEmail": "أدخل بريداً إلكترونياً صحيحاً",
+    "tooShort": "النص قصير جداً",
+    "tooLong": "تجاوزت الحد المسموح",
+    "invalidPrice": "تحقق من الأسعار ونسبة التخفيض",
+    "invalidDates": "يجب أن تكون النهاية بعد البداية",
+    "fileTooLarge": "حجم الملف أكبر من المسموح",
+    "fileType": "نوع الملف غير مسموح",
+    "imageTooSmall": "الصورة صغيرة جداً؛ الحد الأدنى 400×400"
+  },
+  "footer": {
+    "privacy": "سياسة الخصوصية",
+    "terms": "الشروط والأحكام",
+    "contact": "تواصل معنا",
+    "copyright": "© {year} Dinar DZ. جميع الحقوق محفوظة."
+  }
+}

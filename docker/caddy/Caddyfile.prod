@@ -1,0 +1,32 @@
+dinar.dz {
+  encode zstd gzip
+
+  header {
+    -Server
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy "default-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; img-src 'self' data: blob: https://media.dinar.dz; connect-src 'self' https://dinar.dz wss://dinar.dz"
+  }
+
+  handle /api/* {
+    reverse_proxy api:8080
+  }
+
+  handle {
+    reverse_proxy web:3000
+  }
+}
+
+media.dinar.dz {
+  encode zstd gzip
+  header {
+    -Server
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  }
+  reverse_proxy minio:9000
+}
