@@ -1,6 +1,6 @@
 'use client';
 
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import type {Brand, Category, OfferSummary, Wilaya} from '@/lib/api';
 import {OfferCard} from '@/components/offers/offer-card';
 import {SearchBar} from '@/components/offers/search-bar';
@@ -24,13 +24,27 @@ function initialFilters(values: Record<string, string | undefined>): Filters {
     gender: values.gender ?? '',
     age_from: values.age_from ?? '',
     age_to: values.age_to ?? '',
-    sort: values.sort ?? 'newest'
+    min_discount: values.min_discount ?? '',
+    ending_within: values.ending_within ?? '',
+    sort: values.sort ?? 'newest',
+    page: values.page ?? '1'
   };
 }
 
 export function CatalogBrowser({locale, categories, wilayas, brands, offers, initialValues = {}, latestTitle, endingSoonTitle}: {locale: string; categories: Category[]; wilayas: Wilaya[]; brands: Brand[]; offers: OfferSummary[]; initialValues?: Record<string, string | undefined>; latestTitle: string; endingSoonTitle: string}) {
   const [filters, setFilters] = useState<Filters>(() => initialFilters(initialValues));
   const availableBrands = useMemo(() => brands.filter((brand) => (!filters.category || brand.category_id === filters.category) && (!filters.subcategory || brand.subcategory_id === filters.subcategory)), [brands, filters.category, filters.subcategory]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && !(key === 'sort' && value === 'newest')) params.set(key, value);
+    });
+    const nextURL = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
+    if (`${window.location.pathname}${window.location.search}` !== nextURL) {
+      window.history.replaceState({}, '', nextURL);
+    }
+  }, [filters]);
 
   const filteredOffers = useMemo(() => {
     const query = normalize(filters.q ?? '');
@@ -47,6 +61,11 @@ export function CatalogBrowser({locale, categories, wilayas, brands, offers, ini
       const ageTo = enteredAgeTo > 0 && enteredAgeFrom > enteredAgeTo ? enteredAgeFrom : enteredAgeTo;
       if (ageFrom > 0 && offer.age_max < ageFrom) return false;
       if (ageTo > 0 && offer.age_min > ageTo) return false;
+      if (Number(filters.min_discount || 0) > 0 && offer.discount_percent < Number(filters.min_discount)) return false;
+      if (filters.ending_within) {
+        const hours = filters.ending_within === '24h' ? 24 : filters.ending_within === '7d' ? 24 * 7 : 0;
+        if (hours > 0 && new Date(offer.ends_at).getTime() > Date.now() + hours * 60 * 60 * 1000) return false;
+      }
       if (query) {
         const searchable = normalize([offer.title, offer.shop.name, offer.wilaya, offer.city, offer.category.name_ar, offer.category.name_fr, offer.subcategory.name_ar, offer.subcategory.name_fr, offer.brand?.name_ar ?? '', offer.brand?.name_fr ?? ''].join(' '));
         if (!searchable.includes(query)) return false;
@@ -61,22 +80,39 @@ export function CatalogBrowser({locale, categories, wilayas, brands, offers, ini
     });
   }, [filters, offers]);
 
-  const latest = filteredOffers.slice(0, 8);
-  const endingSoon = filteredOffers.filter((offer) => new Date(offer.ends_at).getTime() <= Date.now() + 7 * 24 * 60 * 60 * 1000).slice(0, 4);
+  const page = Math.max(1, Number(filters.page || 1));
+  const pageSize = 24;
+  const totalPages = Math.max(1, Math.ceil(filteredOffers.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageOffers = filteredOffers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const latest = pageOffers.slice(0, 8);
+  const endingSoon = pageOffers.filter((offer) => new Date(offer.ends_at).getTime() <= Date.now() + 7 * 24 * 60 * 60 * 1000).slice(0, 4);
 
-  const selectCategory = (category: string) => setFilters((current) => ({...current, category, subcategory: '', brand: ''}));
-  const selectSubcategory = (subcategory: string) => setFilters((current) => ({...current, subcategory, brand: ''}));
+  const updateFilters = (next: Filters) => setFilters({...next, page: '1'});
+  const selectCategory = (category: string) => setFilters((current) => ({...current, category, subcategory: '', brand: '', page: '1'}));
+  const selectSubcategory = (subcategory: string) => setFilters((current) => ({...current, subcategory, brand: '', page: '1'}));
+  const selectBrand = (brand: string) => setFilters((current) => ({...current, brand, page: '1'}));
   const clear = () => setFilters(initialFilters({}));
 
   return <div className="catalog-layout">
-    <SearchBar locale={locale} wilayas={wilayas} offers={offers} values={filters} onChange={setFilters} onClear={clear} />
+    <SearchBar locale={locale} wilayas={wilayas} offers={offers} values={filters} onChange={updateFilters} onClear={clear} />
     <div className="catalog-main">
       <CategoryRail categories={categories} locale={locale} selectedID={filters.category} selectedSubcategory={filters.subcategory} onSelectCategory={selectCategory} onSelectSubcategory={selectSubcategory} />
-      {filters.subcategory && <BrandRail brands={availableBrands} locale={locale} category={filters.category ?? ''} subcategory={filters.subcategory} selectedBrand={filters.brand} onSelectBrand={(brand) => setFilters((current) => ({...current, brand}))} />}
+      {filters.subcategory && <BrandRail brands={availableBrands} locale={locale} category={filters.category ?? ''} subcategory={filters.subcategory} selectedBrand={filters.brand} onSelectBrand={selectBrand} />}
       <OfferSection title={latestTitle} offers={latest} locale={locale} />
       <OfferSection title={endingSoonTitle} offers={endingSoon} locale={locale} />
+      <Pagination locale={locale} page={currentPage} totalPages={totalPages} onSelect={(nextPage) => setFilters((current) => ({...current, page: String(nextPage)}))} />
     </div>
   </div>;
+}
+
+function Pagination({locale, page, totalPages, onSelect}: {locale: string; page: number; totalPages: number; onSelect: (page: number) => void}) {
+  if (totalPages <= 1) return null;
+  return <nav className="catalog-pagination" aria-label={locale === 'ar' ? 'صفحات العروض' : 'Pages des offres'}>
+    <button type="button" disabled={page === 1} onClick={() => onSelect(page - 1)}>{locale === 'ar' ? 'السابق' : 'Précédent'}</button>
+    <span dir="ltr">{page} / {totalPages}</span>
+    <button type="button" disabled={page === totalPages} onClick={() => onSelect(page + 1)}>{locale === 'ar' ? 'التالي' : 'Suivant'}</button>
+  </nav>;
 }
 
 function OfferSection({title, offers, locale}: {title: string; offers: OfferSummary[]; locale: string}) {

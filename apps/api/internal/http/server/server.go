@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"log/slog"
 	"os"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func New(cfg config.Config, log *slog.Logger) *fiber.App {
@@ -36,7 +38,16 @@ func New(cfg config.Config, log *slog.Logger) *fiber.App {
 		return success(c, fiber.Map{"service": "dinar-api", "version": "v1"})
 	})
 	guest.RegisterBranding(v1)
-	guest.NewCatalog(cfg.AppURL).Register(v1)
+	var database *sql.DB
+	if cfg.DatabaseURL != "" {
+		opened, err := sql.Open("pgx", cfg.DatabaseURL)
+		if err != nil {
+			log.Warn("guest analytics database disabled", "error", err)
+		} else {
+			database = opened
+		}
+	}
+	guest.NewCatalog(cfg.AppURL, database).Register(v1)
 
 	return app
 }

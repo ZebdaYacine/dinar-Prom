@@ -8,6 +8,7 @@ type Config struct {
 	Addr        string
 	Environment string
 	AppURL      string
+	DatabaseURL string
 }
 
 func Load() Config {
@@ -23,5 +24,5 @@ func Load() Config {
 	if appURL == "" {
 		appURL = "http://localhost:8180"
 	}
-	return Config{Addr: addr, Environment: environment, AppURL: appURL}
+	return Config{Addr: addr, Environment: environment, AppURL: appURL, DatabaseURL: os.Getenv("DATABASE_URL")}
 }

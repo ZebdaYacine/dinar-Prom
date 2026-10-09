@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run src",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "15.5.27",
@@ -19,11 +20,13 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.7",
+    "@playwright/test": "1.51.1",
     "@types/node": "22.15.30",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
     "eslint": "9.27.0",
     "eslint-config-next": "15.5.27",
+    "@playwright/test": "1.51.1",
     "typescript": "5.8.3",
     "vitest": "3.1.4"
   }

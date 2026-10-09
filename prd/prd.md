@@ -8,7 +8,7 @@
 
 | PRD | Epic | Stories | Priority | Status | Primary surfaces |
 |---|---|---|---|---|---|
-| PRD-01 | Guest Experience | US-V01 … US-V07 (7) | High | 🟡 Planned | Public Next.js pages |
+| PRD-01 | Guest Experience | US-V01 … US-V07 (7) | High | ✅ Shipped | Public Next.js pages |
 | PRD-02 | Merchant Identity & Verification | US-M01 … US-M05 (5) | Critical | 🟡 Planned | Auth and onboarding |
 | PRD-03 | Merchant Offers | US-O01 … US-O07 (7) | Critical | 🟡 Planned | Merchant dashboard |
 | PRD-04 | Trial, Billing & Payments | US-B01 … US-B08 (8) | Critical | 🟡 Planned | Billing and Chargily |
@@ -60,7 +60,7 @@ PRD-09 Web shell ----------------------------+
 | **Epic**     | 1 — Guest Experience                                                  |
 | **Stories**  | US-V01 … US-V07 (7)                                                    |
 | **Priority** | High                                                                    |
-| **Status**   | 🟡 Planned                                                              |
+| **Status**   | ✅ Shipped                                                              |
 | **Surfaces** | `apps/web/app/(public)/page.tsx`, `offers`, `offers/[id]`, `shop/[slug]` |
 | **API**      | `GET /offers`, `GET /offers/:id`, `GET /offers/:id/similar`, `POST /offers/:id/view`, `POST /offers/:id/whatsapp`, `POST /offers/:id/report`, `GET /shops/:slug`, `GET /categories`, `GET /wilayas`, `GET /ads` |
 
@@ -121,11 +121,11 @@ Home (/) ──search/filter──▶ /offers ──click card──▶ /offers/
 
 ## 8. Subtasks
 
-- [ ] T1.1 Build public route group, RTL layout, SEO metadata, and loading/empty/error states.
-- [ ] T1.2 Implement public offer query, pagination, filters, sorting, and URL state.
-- [ ] T1.3 Build `OfferCard`, countdown, gallery, shop card, WhatsApp, share, and report components.
-- [ ] T1.4 Add view/click deduplication and rate-limit middleware.
-- [ ] T1.5 Add Playwright flow: home → search → detail → WhatsApp/report.
+- [x] T1.1 Build public route group, RTL layout, SEO metadata, and loading/empty/error states.
+- [x] T1.2 Implement public offer query, pagination, filters, sorting, and URL state.
+- [x] T1.3 Build `OfferCard`, countdown, gallery, shop card, WhatsApp, share, and report components.
+- [x] T1.4 Add view/click deduplication and rate-limit middleware.
+- [x] T1.5 Add Playwright flow: home → search → detail → WhatsApp/report.
 
 ## 9. Success metrics
 

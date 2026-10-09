@@ -12,7 +12,7 @@ function one(value: string | string[] | undefined) {
 export default async function HomePage({params, searchParams}: {params: Promise<{locale: string}>; searchParams: Promise<SearchParams>}) {
   const {locale} = await params;
   const raw = await searchParams;
-  const values = Object.fromEntries(['q', 'wilaya', 'city', 'category', 'subcategory', 'brand', 'gender', 'age_from', 'age_to', 'sort'].map((key) => [key, one(raw[key])])) as Record<string, string>;
+  const values = Object.fromEntries(['q', 'wilaya', 'city', 'category', 'subcategory', 'brand', 'gender', 'age_from', 'age_to', 'min_discount', 'ending_within', 'sort', 'page'].map((key) => [key, one(raw[key])])) as Record<string, string>;
   const t = await getTranslations({locale, namespace: 'home'});
   const [allOffers, categories, wilayas, brands] = await Promise.all([
     getOffers({per_page: 48, sort: 'newest'}, locale),

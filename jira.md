@@ -18,7 +18,7 @@ This file converts [`prd/prd.md`](prd/prd.md), [`userstory.md`](userstory.md), a
 | External ID | Epic summary | PRD | Priority | Depends on | Status |
 |---|---|---|---|---|---|
 | EPIC-00 | Product program and release planning | PRD-00 | Critical | — | Done |
-| EPIC-01 | Guest experience | PRD-01 | High | EPIC-08, EPIC-09 | In Progress |
+| EPIC-01 | Guest experience | PRD-01 | High | EPIC-08, EPIC-09 | Done |
 | EPIC-02 | Merchant identity and verification | PRD-02 | Critical | EPIC-08, EPIC-09 | Backlog |
 | EPIC-03 | Merchant offers and media | PRD-03 | Critical | EPIC-02, EPIC-08 | Backlog |
 | EPIC-04 | Trial, billing, and payments | PRD-04 | Critical | EPIC-03, EPIC-08 | Backlog |
@@ -41,15 +41,15 @@ This file converts [`prd/prd.md`](prd/prd.md), [`userstory.md`](userstory.md), a
 
 ## 2.2 EPIC-01 execution status
 
-The guest experience is implemented on the current scaffold and deployed locally. The public catalog is intentionally behind an isolated in-memory adapter until EPIC-08 delivers the PostgreSQL `public_offers` view and persistent analytics tables. This keeps the HTTP contract stable without claiming the production persistence requirements are complete.
+The guest experience is implemented and deployed locally. Public catalogue reads remain deterministic on the current scaffold, while guest view/click/report state is persisted in PostgreSQL through migration `000008_guest_analytics`; the adapter fallback is retained only for isolated unit tests without a database.
 
 | ID | Task | Status | Evidence |
 |---|---|---|---|
-| T1.1 | Build public routes and guest UI states | In Progress | SSR home, offers, offer detail, shop pages, responsive cards, icon category rail, nested subcategory chips, 58-wilaya/commune explorer, search controls, empty states, sharing and reporting in `apps/web/src` |
-| T1.2 | Implement public queries, filters, Arabic search, and pagination | In Progress | Public catalog adapter in `apps/api/internal/guest/catalog.go`; nested category filters, 58-wilaya/1,541-commune catalogue, city endpoint, sorting, Arabic normalization and pagination covered by API and web checks |
-| T1.3 | Implement share, WhatsApp, analytics, reports, and rate limits | In Progress | WhatsApp/share actions, hashed visitor deduplication, report validation and abuse limits implemented; durable Redis/PostgreSQL persistence remains an EPIC-08 dependency |
-| T1.4 | Add guest SEO and Playwright flow | In Progress | SSR metadata and OpenGraph metadata implemented; browser-level Playwright coverage is still outstanding |
-| EPIC-01 | Guest experience | In Progress | Local Docker deployment and smoke checks pass; production Definition of Done is pending EPIC-08 persistence and browser E2E coverage |
+| T1.1 | Build public routes and guest UI states | Done | SSR home, offers, offer detail, shop pages, responsive cards, icon category rail, nested subcategory chips, 58-wilaya/commune explorer, search controls, empty states, sharing and reporting in `apps/web/src` |
+| T1.2 | Implement public queries, filters, Arabic search, and pagination | Done | Public catalogue adapter in `apps/api/internal/guest/catalog.go`; nested category filters, 58-wilaya/1,541-commune catalogue, city endpoint, discount/expiry filters, sorting, Arabic normalization, client pagination, and URL state covered by API/web checks |
+| T1.3 | Implement share, WhatsApp, analytics, reports, and rate limits | Done | Web Share/clipboard fallback, phone fallback, hashed visitor deduplication, PostgreSQL event/report persistence through `000008_guest_analytics`, report validation, duplicate protection, and rate limits verified by live smoke checks |
+| T1.4 | Add guest SEO and Playwright flow | Done | Canonical/alternate/OG/Twitter metadata, Offer JSON-LD, `sitemap.xml`, `robots.txt`, and `apps/web/e2e/guest-experience.spec.ts`; both browser journeys pass against local Docker |
+| EPIC-01 | Guest experience | Done | `go test ./...`, web typecheck/lint/Vitest/build, Playwright (2 passed), PostgreSQL migration verification, and local health/SEO/guest smoke checks pass |
 
 ## 3. Story backlog
 

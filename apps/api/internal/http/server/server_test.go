@@ -74,6 +74,40 @@ func TestGuestSearchNormalizesArabic(t *testing.T) {
 	}
 }
 
+func TestGuestDiscountAndExpiryFilters(t *testing.T) {
+	app := New(config.Config{Addr: ":8080", Environment: "test"}, slog.Default())
+	response, err := app.Test(httptest.NewRequest("GET", "/api/v1/offers?q=ازياء&min_discount=50&ending_within=14d", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected 200, got %d", response.StatusCode)
+	}
+	var payload struct {
+		Data []struct {
+			ID              string `json:"id"`
+			DiscountPercent int    `json:"discount_percent"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatal(err)
+	}
+	if len(payload.Data) != 1 || payload.Data[0].ID != "offer-001" || payload.Data[0].DiscountPercent < 50 {
+		t.Fatalf("unexpected discount filter results: %+v", payload.Data)
+	}
+
+	response, err = app.Test(httptest.NewRequest("GET", "/api/v1/offers?q=ازياء&ending_within=24h", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+		t.Fatal(err)
+	}
+	if len(payload.Data) != 0 {
+		t.Fatalf("expected the 12-day offer to be excluded from the 24-hour window: %+v", payload.Data)
+	}
+}
+
 func TestGuestAudienceFiltersUseGenderAndAgeOverlap(t *testing.T) {
 	app := New(config.Config{Addr: ":8080", Environment: "test"}, slog.Default())
 	response, err := app.Test(httptest.NewRequest("GET", "/api/v1/offers?category=beauty&gender=women&age_from=56&age_to=58", nil))

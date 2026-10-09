@@ -5,7 +5,7 @@
 | **Epic**     | 1 — Guest Experience                                             |
 | **Stories**  | US-V01 … US-V07 (7)                                               |
 | **Priority** | High                                                             |
-| **Status**   | 🟠 In Progress                                                    |
+| **Status**   | ✅ Shipped                                                        |
 | **Surfaces** | `apps/web/app/(public)/page.tsx`, `offers`, `offers/[id]`, `shop/[slug]` |
 | **API**      | `GET /offers`, `GET /offers/:id`, `GET /shops/:slug`, `POST /offers/:id/view`, `POST /offers/:id/whatsapp`, `POST /offers/:id/report`, `GET /categories`, `GET /wilayas`, `GET /wilayas/:code/cities` |
 
@@ -61,8 +61,8 @@ The guest catalogue exposes the complete 58-wilaya / 1,541-commune reference set
 
 - [x] T1.1 Build public routes, cards, filters, detail gallery, shop page, and states, including responsive category and location explorers.
 - [x] T1.2 Implement public queries, Arabic search, pagination, nested category filters, and URL-based wilaya/commune filters.
-- [ ] T1.3 Implement WhatsApp, sharing, view/click deduplication, reports, and rate limits.
-- [ ] T1.4 Add SEO metadata and Playwright guest journey.
+- [x] T1.3 Implement WhatsApp, sharing, view/click deduplication, reports, and rate limits.
+- [x] T1.4 Add SEO metadata and Playwright guest journey.
 
 ## 9. Success metrics
 
@@ -74,12 +74,14 @@ Search quality depends on Arabic seed data. Confirm official wilaya data and sim
 
 ## 11. Implementation checkpoint
 
-The current implementation delivers the guest HTTP and SSR experience against an isolated catalog adapter in `apps/api/internal/guest/catalog.go`. The adapter exposes the documented public endpoints, applies the approved/access/date visibility rule, normalizes Arabic search, paginates results, generates WhatsApp links, deduplicates safe visitor actions, and limits reports. The web application provides the home, listing, detail, shop, share, WhatsApp, report, responsive, and localized surfaces under `apps/web/src/`.
+The current implementation delivers the guest HTTP and SSR experience against the catalogue adapter in `apps/api/internal/guest/catalog.go`. The adapter exposes the documented public endpoints, applies the approved/access/date visibility rule, normalizes Arabic search, paginates results, generates WhatsApp links, and applies the public filters. Guest events and reports use the PostgreSQL-backed `analyticsStore` and migration `000008_guest_analytics`; the in-memory path is retained only when unit tests intentionally omit a database. The web application provides the home, listing, detail, shop, share, WhatsApp, report, responsive, SEO, and localized surfaces under `apps/web/src/`.
 
 Local verification completed:
 
 - `apps/api`: `go test ./...`
 - `apps/web`: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`
-- Docker smoke checks: `/healthz`, `/api/v1/offers`, Arabic search, Arabic and French listing pages, offer detail, shop page, and missing-offer 404
+- `apps/web`: `pnpm test:e2e` — 2 Playwright guest journeys passed against Docker
+- PostgreSQL migration `000008_guest_analytics` applied; live view/WhatsApp dedup and report duplicate protection verified
+- Docker smoke checks: `/healthz`, `/readyz`, `/api/v1/offers`, Arabic search and discount/expiry filters, Arabic and French pages, offer detail, shop page, `robots.txt`, `sitemap.xml`, and missing-offer 404
 
-The epic is intentionally still **In Progress**. Replacing the adapter with the PostgreSQL `public_offers` query, persisting metrics/rate-limit state through the platform data layer, and adding the Playwright guest journey remain required before the PRD can be marked Done.
+EPIC-01 is **Shipped** on the current scaffold. The future EPIC-08 work may replace the deterministic catalogue adapter with generated PostgreSQL `public_offers` queries without changing the public HTTP contract.

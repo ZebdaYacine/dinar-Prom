@@ -1,10 +1,21 @@
 'use client';
 
-import {useEffect, useMemo, useState, type CSSProperties} from 'react';
+import {useEffect, useMemo, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent} from 'react';
 import type {OfferSummary, Wilaya} from '@/lib/api';
 import {Icon} from '@/components/icon';
 
 type FilterValues = Record<string, string>;
+
+type SearchSuggestion = {
+  kind: 'product' | 'shop';
+  label: string;
+  detail: string;
+  value: string;
+};
+
+function normalizeSearch(value: string) {
+  return value.toLocaleLowerCase().replace(/[إأآاٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/ـ/g, '').replace(/[ًٌٍَُِّْ]/g, '').trim();
+}
 
 function FilterFields({locale, wilayas, values, onChange}: {locale: string; wilayas: Wilaya[]; values: FilterValues; onChange: (patch: Record<string, string>) => void}) {
   const selectedWilaya = values.wilaya ?? '';
@@ -47,34 +58,87 @@ function FilterFields({locale, wilayas, values, onChange}: {locale: string; wila
       <div className="range-caption" dir="ltr"><span>0</span><span>120</span></div>
       {(values.age_from || values.age_to) && <button className="range-reset" type="button" onClick={() => onChange({age_from: '', age_to: ''})}>{locale === 'ar' ? 'كل الأعمار' : 'Tous les âges'}</button>}
     </div>
+    <label className="sidebar-control">
+      <span>{locale === 'ar' ? 'الحد الأدنى للتخفيض' : 'Réduction minimale'}</span>
+      <select value={values.min_discount ?? ''} onChange={(event) => onChange({min_discount: event.target.value})}>
+        <option value="">{locale === 'ar' ? 'كل التخفيضات' : 'Toutes les réductions'}</option>
+        {[10, 20, 30, 50].map((value) => <option key={value} value={value}>{locale === 'ar' ? `أكثر من ${value}%` : `${value}% ou plus`}</option>)}
+      </select>
+    </label>
+    <label className="sidebar-control">
+      <span>{locale === 'ar' ? 'ينتهي خلال' : 'Se termine dans'}</span>
+      <select value={values.ending_within ?? ''} onChange={(event) => onChange({ending_within: event.target.value})}>
+        <option value="">{locale === 'ar' ? 'أي وقت' : 'N’importe quand'}</option>
+        <option value="24h">{locale === 'ar' ? '24 ساعة' : '24 heures'}</option>
+        <option value="7d">{locale === 'ar' ? '7 أيام' : '7 jours'}</option>
+      </select>
+    </label>
   </>;
 }
 
 export function SearchBar({locale, wilayas, offers, values = {}, onChange, onClear}: {locale: string; wilayas: Wilaya[]; offers: OfferSummary[]; values?: FilterValues; onChange: (values: FilterValues) => void; onClear: () => void}) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const hasFilters = Boolean(values.q || values.wilaya || values.city || values.gender || values.age_from || values.age_to || values.category || values.subcategory || values.brand || (values.sort && values.sort !== 'newest'));
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const hasFilters = Boolean(values.q || values.wilaya || values.city || values.gender || values.age_from || values.age_to || values.category || values.subcategory || values.brand || values.min_discount || values.ending_within || (values.sort && values.sort !== 'newest'));
   const update = (patch: Record<string, string>) => onChange({...values, ...patch});
 
   const suggestions = useMemo(() => {
     const query = (values.q ?? '').trim();
-    if (query.length < 2) return [];
-    const normalizedQuery = query.toLocaleLowerCase();
+    if (normalizeSearch(query).length < 2) return [];
+    const normalizedQuery = normalizeSearch(query);
     const seen = new Set<string>();
-    const result: Array<{kind: 'product' | 'shop'; label: string; detail: string; value: string}> = [];
-    const add = (suggestion: {kind: 'product' | 'shop'; label: string; detail: string; value: string}) => {
-      const key = `${suggestion.kind}:${suggestion.value.toLocaleLowerCase()}`;
-      if (seen.has(key) || result.length >= 8) return;
+    const ranked: Array<SearchSuggestion & {score: number}> = [];
+    const add = (suggestion: SearchSuggestion) => {
+      const normalizedValue = normalizeSearch(suggestion.value);
+      const key = `${suggestion.kind}:${normalizedValue}`;
+      if (seen.has(key)) return;
       seen.add(key);
-      result.push(suggestion);
+      const score = normalizedValue.startsWith(normalizedQuery) ? 0 : normalizedValue.indexOf(normalizedQuery) === 0 ? 1 : 2;
+      ranked.push({...suggestion, score});
     };
     for (const offer of offers) {
-      if (offer.title.toLocaleLowerCase().includes(normalizedQuery)) add({kind: 'product', label: offer.title, detail: locale === 'ar' ? 'منتج' : 'Produit', value: offer.title});
-      if (offer.shop.name.toLocaleLowerCase().includes(normalizedQuery)) add({kind: 'shop', label: offer.shop.name, detail: locale === 'ar' ? 'محل' : 'Commerce', value: offer.shop.name});
-      if (result.length >= 8) break;
+      const title = normalizeSearch(offer.title);
+      const shop = normalizeSearch(offer.shop.name);
+      if (title.includes(normalizedQuery)) add({kind: 'product', label: offer.title, detail: locale === 'ar' ? 'منتج' : 'Produit', value: offer.title});
+      if (shop.includes(normalizedQuery)) add({kind: 'shop', label: offer.shop.name, detail: locale === 'ar' ? 'محل' : 'Commerce', value: offer.shop.name});
     }
-    return result;
+    return ranked.sort((left, right) => left.score - right.score || left.label.localeCompare(right.label, locale)).slice(0, 8);
   }, [locale, offers, values.q]);
+
+  useEffect(() => {
+    setActiveSuggestion(-1);
+  }, [values.q]);
+
+  const chooseSuggestion = (suggestion?: SearchSuggestion) => {
+    if (!suggestion) return;
+    update({q: suggestion.value});
+    setActiveSuggestion(-1);
+    setIsSearchFocused(false);
+  };
+
+  const handleSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (!suggestions.length) {
+      if (event.key === 'Escape') setIsSearchFocused(false);
+      return;
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setIsSearchFocused(true);
+      setActiveSuggestion((current) => (current + 1) % suggestions.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setIsSearchFocused(true);
+      setActiveSuggestion((current) => (current <= 0 ? suggestions.length - 1 : current - 1));
+    } else if (event.key === 'Enter' && activeSuggestion >= 0) {
+      event.preventDefault();
+      chooseSuggestion(suggestions[activeSuggestion]);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      setIsSearchFocused(false);
+      setActiveSuggestion(-1);
+    }
+  };
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setIsOpen(false); };
@@ -93,14 +157,15 @@ export function SearchBar({locale, wilayas, offers, values = {}, onChange, onCle
     return () => document.body.classList.remove('catalog-sidebar-open');
   }, [isOpen]);
 
+  const suggestionListID = `search-suggestions-${locale}`;
   const searchInput = <div className="search-autocomplete" onBlur={() => window.setTimeout(() => setIsSearchFocused(false), 120)}>
     <label className="sidebar-search-field">
       <span className="sr-only">{locale === 'ar' ? 'بحث' : 'Recherche'}</span>
       <Icon name="search" size={18} />
-      <input name="q" value={values.q ?? ''} onFocus={() => setIsSearchFocused(true)} onChange={(event) => update({q: event.target.value})} placeholder={locale === 'ar' ? 'ابحث عن منتج أو محل...' : 'Rechercher un produit ou un commerce...'} autoComplete="off" />
+      <input name="q" value={values.q ?? ''} onFocus={() => setIsSearchFocused(true)} onKeyDown={handleSearchKeyDown} onChange={(event) => update({q: event.target.value})} placeholder={locale === 'ar' ? 'ابحث عن منتج أو محل...' : 'Rechercher un produit ou un commerce...'} autoComplete="off" role="combobox" aria-autocomplete="list" aria-expanded={isSearchFocused && suggestions.length > 0} aria-controls={suggestionListID} aria-activedescendant={activeSuggestion >= 0 ? `${suggestionListID}-${activeSuggestion}` : undefined} />
       {values.q && <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => update({q: ''})} aria-label={locale === 'ar' ? 'مسح البحث' : 'Effacer la recherche'}><Icon name="x" size={15} /></button>}
     </label>
-    {isSearchFocused && suggestions.length > 0 && <div className="search-suggestions" role="listbox" aria-label={locale === 'ar' ? 'اقتراحات البحث' : 'Suggestions de recherche'}>{suggestions.map((suggestion) => <button key={`${suggestion.kind}-${suggestion.value}`} type="button" role="option" aria-selected="false" className="search-suggestion" onMouseDown={(event) => event.preventDefault()} onClick={() => { update({q: suggestion.value}); setIsSearchFocused(false); }}><span className="search-suggestion-kind">{suggestion.kind === 'product' ? '⌁' : '⌂'}</span><span><strong>{suggestion.label}</strong><small>{suggestion.detail}</small></span></button>)}</div>}
+    {isSearchFocused && suggestions.length > 0 && <div id={suggestionListID} className="search-suggestions" role="listbox" aria-label={locale === 'ar' ? 'اقتراحات البحث' : 'Suggestions de recherche'}>{suggestions.map((suggestion, index) => <button id={`${suggestionListID}-${index}`} key={`${suggestion.kind}-${suggestion.value}`} type="button" role="option" aria-selected={index === activeSuggestion} className={`search-suggestion${index === activeSuggestion ? ' is-active' : ''}`} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setActiveSuggestion(index)} onClick={() => chooseSuggestion(suggestion)}><span className="search-suggestion-kind" aria-hidden="true">{suggestion.kind === 'product' ? '⌁' : '⌂'}</span><span><strong>{suggestion.label}</strong><small>{suggestion.detail}</small></span></button>)}</div>}
   </div>;
   const sortSelect = <label className="sidebar-control"><span>{locale === 'ar' ? 'الترتيب' : 'Trier'}</span><select name="sort" value={values.sort ?? 'newest'} onChange={(event) => update({sort: event.target.value})}><option value="newest">{locale === 'ar' ? 'الأحدث' : 'Plus récentes'}</option><option value="ending_soon">{locale === 'ar' ? 'ينتهي قريباً' : 'Se terminent bientôt'}</option><option value="discount">{locale === 'ar' ? 'أعلى تخفيض' : 'Meilleure réduction'}</option><option value="price_asc">{locale === 'ar' ? 'الأقل سعراً' : 'Prix croissant'}</option></select></label>;
   const toolbarSortSelect = <label className="toolbar-sort"><span className="sr-only">{locale === 'ar' ? 'الترتيب' : 'Trier'}</span><select name="sort" value={values.sort ?? 'newest'} onChange={(event) => update({sort: event.target.value})}><option value="newest">{locale === 'ar' ? 'الأحدث' : 'Plus récentes'}</option><option value="ending_soon">{locale === 'ar' ? 'ينتهي قريباً' : 'Se terminent bientôt'}</option><option value="discount">{locale === 'ar' ? 'أعلى تخفيض' : 'Meilleure réduction'}</option><option value="price_asc">{locale === 'ar' ? 'الأقل سعراً' : 'Prix croissant'}</option></select></label>;

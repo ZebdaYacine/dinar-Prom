@@ -2,6 +2,7 @@ package guest
 
 import (
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"net/url"
@@ -33,6 +34,7 @@ type Catalog struct {
 	whatsappClicks map[string]time.Time
 	reports        map[string]time.Time
 	reportWindows  map[string][]time.Time
+	analytics      *analyticsStore
 }
 
 type offer struct {
@@ -152,7 +154,7 @@ type listQuery struct {
 	PerPage        int
 }
 
-func NewCatalog(appURL string) *Catalog {
+func NewCatalog(appURL string, databases ...*sql.DB) *Catalog {
 	if appURL == "" {
 		appURL = "http://localhost:8180"
 	}
@@ -206,7 +208,11 @@ func NewCatalog(appURL string) *Catalog {
 	}
 	wilayas := loadWilayas()
 	offers = append(offers, loadDemoOffers(categories, wilayas, brands, now)...)
-	return &Catalog{appURL: strings.TrimRight(appURL, "/"), offers: offers, shops: shops, categories: categories, brands: brands, wilayas: wilayas, views: make(map[string]time.Time), whatsappClicks: make(map[string]time.Time), reports: make(map[string]time.Time), reportWindows: make(map[string][]time.Time)}
+	var analytics *analyticsStore
+	if len(databases) > 0 && databases[0] != nil {
+		analytics = newAnalyticsStore(databases[0])
+	}
+	return &Catalog{appURL: strings.TrimRight(appURL, "/"), offers: offers, shops: shops, categories: categories, brands: brands, wilayas: wilayas, views: make(map[string]time.Time), whatsappClicks: make(map[string]time.Time), reports: make(map[string]time.Time), reportWindows: make(map[string][]time.Time), analytics: analytics}
 }
 
 func (c *Catalog) Register(router fiber.Router) {
@@ -270,12 +276,20 @@ func (c *Catalog) GetSimilar(ctx *fiber.Ctx) error {
 }
 
 func (c *Catalog) RecordView(ctx *fiber.Ctx) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
 	item, ok := c.findPublic(ctx.Params("id"))
+	c.mu.RUnlock()
 	if !ok {
 		return errorResponse(ctx, fiber.StatusNotFound, "not_found", "Offer not found")
 	}
+	if c.analytics != nil {
+		recorded, err := c.analytics.recordEvent(ctx.Context(), "view", item.ID, visitorKey(ctx), time.Now().UTC())
+		if err == nil {
+			return success(ctx, fiber.Map{"recorded": recorded})
+		}
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	key := "view:" + item.ID + ":" + visitorKey(ctx)
 	now := time.Now().UTC()
 	recorded := false
@@ -287,12 +301,20 @@ func (c *Catalog) RecordView(ctx *fiber.Ctx) error {
 }
 
 func (c *Catalog) RecordWhatsApp(ctx *fiber.Ctx) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
 	item, ok := c.findPublic(ctx.Params("id"))
+	c.mu.RUnlock()
 	if !ok {
 		return errorResponse(ctx, fiber.StatusNotFound, "not_found", "Offer not found")
 	}
+	if c.analytics != nil {
+		recorded, err := c.analytics.recordEvent(ctx.Context(), "whatsapp", item.ID, visitorKey(ctx), time.Now().UTC())
+		if err == nil {
+			return success(ctx, fiber.Map{"url": c.whatsappURL(item), "recorded": recorded})
+		}
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	now := time.Now().UTC()
 	key := "whatsapp:" + item.ID + ":" + visitorKey(ctx)
 	if previous, exists := c.whatsappClicks[key]; exists && now.Sub(previous) < visitorWindow {
@@ -303,9 +325,9 @@ func (c *Catalog) RecordWhatsApp(ctx *fiber.Ctx) error {
 }
 
 func (c *Catalog) ReportOffer(ctx *fiber.Ctx) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
 	item, ok := c.findPublic(ctx.Params("id"))
+	c.mu.RUnlock()
 	if !ok {
 		return errorResponse(ctx, fiber.StatusNotFound, "not_found", "Offer not found")
 	}
@@ -322,6 +344,21 @@ func (c *Catalog) ReportOffer(ctx *fiber.Ctx) error {
 	}
 	visitor := visitorKey(ctx)
 	now := time.Now().UTC()
+	if c.analytics != nil {
+		result, err := c.analytics.recordReport(ctx.Context(), item.ID, visitor, body.Reason, body.Message, now)
+		if err == nil {
+			switch result {
+			case reportDuplicate:
+				return errorResponse(ctx, fiber.StatusConflict, "already_reported", "This offer was already reported")
+			case reportRateLimited:
+				return errorResponse(ctx, fiber.StatusTooManyRequests, "rate_limited", "Too many reports; try again later")
+			default:
+				return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{"data": fiber.Map{"accepted": true, "offer_id": item.ID}})
+			}
+		}
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	duplicateKey := item.ID + ":" + visitor
 	if previous, exists := c.reports[duplicateKey]; exists && now.Sub(previous) < 24*time.Hour {
 		return errorResponse(ctx, fiber.StatusConflict, "already_reported", "This offer was already reported")
