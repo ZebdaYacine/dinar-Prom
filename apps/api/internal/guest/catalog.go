@@ -217,7 +217,10 @@ func NewCatalog(appURL string, databases ...*sql.DB) *Catalog {
 	if len(databases) > 0 && databases[0] != nil {
 		analytics = newAnalyticsStore(databases[0])
 	}
-	mediaBase := strings.TrimRight(os.Getenv("DEMO_MEDIA_BASE_URL"), "/")
+	mediaBase := strings.TrimRight(os.Getenv("PUBLIC_MEDIA_URL"), "/")
+	if mediaBase == "" {
+		mediaBase = strings.TrimRight(os.Getenv("DEMO_MEDIA_BASE_URL"), "/")
+	}
 	if mediaBase == "" {
 		mediaBase = "http://localhost:9100/dinar-public"
 	}

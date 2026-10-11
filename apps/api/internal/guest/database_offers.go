@@ -6,15 +6,16 @@ import (
 )
 
 func (c *Catalog) currentOffers(ctx context.Context) []offer {
-	items := append([]offer(nil), c.offers...)
 	if c.database == nil {
-		return items
+		return append([]offer(nil), c.offers...)
 	}
 	databaseItems, err := c.databaseOffers(ctx)
 	if err != nil {
-		return items
+		// A configured database is the source of truth. Do not silently expose
+		// demo records when its public-offers query fails.
+		return nil
 	}
-	return append(items, databaseItems...)
+	return databaseItems
 }
 
 func (c *Catalog) databaseOffers(ctx context.Context) ([]offer, error) {
@@ -22,7 +23,8 @@ func (c *Catalog) databaseOffers(ctx context.Context) ([]offer, error) {
 		SELECT o.id::text,o.title_ar,o.title_fr,o.description_ar,o.description_fr,
 		       o.category_slug,o.subcategory_slug,COALESCE(o.brand_slug,''),
 		       o.wilaya_code,o.city,o.price_before_dzd,o.price_after_dzd,o.starts_at,o.ends_at,
-		       o.address,o.whatsapp,ms.slug,ms.name,ms.description,ms.address,ms.phone,ms.whatsapp
+		       COALESCE(o.address,''),COALESCE(o.whatsapp,''),ms.slug,ms.name,
+		       COALESCE(ms.description,''),COALESCE(ms.address,''),COALESCE(ms.phone,''),COALESCE(ms.whatsapp,'')
 		FROM public_offers o JOIN merchant_shops ms ON ms.user_id=o.merchant_id
 		ORDER BY o.starts_at DESC`)
 	if err != nil {
