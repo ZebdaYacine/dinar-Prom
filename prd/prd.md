@@ -9,7 +9,7 @@
 | PRD | Epic | Stories | Priority | Status | Primary surfaces |
 |---|---|---|---|---|---|
 | PRD-01 | Guest Experience | US-V01 … US-V07 (7) | High | ✅ Shipped | Public Next.js pages |
-| PRD-02 | Merchant Identity & Verification | US-M01 … US-M05 (5) | Critical | 🟠 In Progress | Auth and onboarding |
+| PRD-02 | Merchant Identity & Verification | US-M01 … US-M05 (5) | Critical | ✅ Shipped | Auth and onboarding |
 | PRD-03 | Merchant Offers | US-O01 … US-O07 (7) | Critical | 🟡 Planned | Merchant dashboard |
 | PRD-04 | Trial, Billing & Payments | US-B01 … US-B08 (8) | Critical | 🟡 Planned | Billing and Chargily |
 | PRD-05 | Admin Review & Audit | US-A01 … US-A04, US-A10 (5) | Critical | 🟡 Planned | Admin review queues |
@@ -149,7 +149,7 @@ Home (/) ──search/filter──▶ /offers ──click card──▶ /offers/
 | **Epic**     | 2 — Merchant Identity & Verification                            |
 | **Stories**  | US-M01 … US-M05 (5)                                             |
 | **Priority** | Critical                                                        |
-| **Status**   | 🟠 In Progress                                                  |
+| **Status**   | ✅ Shipped                                                      |
 | **Surfaces** | `apps/web/app/(auth)/login`, `onboarding/personal`, `shop`, `documents`, `review` |
 | **API**      | `GET /auth/google/login`, `GET /auth/google/callback`, `POST /auth/logout`, `GET /me`, `PUT /merchant/profile`, `PUT /merchant/shop`, `POST /merchant/documents`, `POST /merchant/submit` |
 
@@ -208,18 +208,18 @@ The marketplace needs trustworthy merchant identity without forcing customers to
 ## 7. Technical notes
 
 - Session token is random in the cookie; only its SHA-256 hash is stored.
-- Cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, 30-day sliding expiry.
+- The refresh cookie is `HttpOnly`, `Secure` in production, `SameSite=Strict`, and rotated within a 30-day lifetime; the short-lived OAuth state cookie uses `SameSite=Lax`.
 - Document content type is detected from magic bytes, not filename extension.
 - Private documents never return a storage key. Admin access uses a five-minute signed URL and audit log.
-- CSRF applies to all state-changing browser requests; the OAuth callback validates state and PKCE.
+- CSRF double-submit validation protects refresh and logout cookie operations; merchant writes require the in-memory bearer access token, and the OAuth callback validates state and PKCE.
 
 ## 8. Subtasks
 
-- [ ] T2.1 Configure Google OAuth, callback, session table, cookie, logout, and role middleware.
-- [ ] T2.2 Build onboarding wizard with autosave, validation, resume step, and mobile UX.
-- [ ] T2.3 Implement private document upload, size/type checks, hashing, and storage adapter.
-- [ ] T2.4 Implement consent, merchant submission transaction, rejection/re-upload behavior, and email jobs.
-- [ ] T2.5 Add authorization and document privacy integration tests.
+- [x] T2.1 Configure Google OAuth, callback, session table, cookie, logout, and role middleware.
+- [x] T2.2 Build onboarding wizard with autosave, validation, resume step, and mobile UX.
+- [x] T2.3 Implement private document upload, size/type checks, hashing, and storage adapter.
+- [x] T2.4 Implement consent, merchant submission transaction, rejection/re-upload behavior, and email jobs.
+- [x] T2.5 Add authorization and document privacy integration tests.
 
 ## 9. Success metrics
 

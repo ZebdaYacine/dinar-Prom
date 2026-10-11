@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -22,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dinar-dz/dinar/internal/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
@@ -46,6 +48,8 @@ type Config struct {
 	JWTPrivateKeyFile, JWTPublicKeyFile                                        string
 	AccessTTL, RefreshTTL                                                      time.Duration
 	CookieSecure                                                               bool
+	IPHashSalt                                                                 string
+	PrivateStore                                                               storage.PrivateStore
 }
 
 type User struct {
@@ -129,7 +133,7 @@ type Service struct {
 	merchants  map[string]*Merchant
 	sessions   map[string]*session
 	oauth      map[string]oauthState
-	objects    map[string][]byte
+	store      storage.PrivateStore
 	privateKey *rsa.PrivateKey
 	publicKey  *rsa.PublicKey
 }
@@ -160,7 +164,10 @@ func New(cfg Config) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Service{cfg: cfg, db: cfg.Database, users: map[string]User{}, merchants: map[string]*Merchant{}, sessions: map[string]*session{}, oauth: map[string]oauthState{}, objects: map[string][]byte{}, privateKey: priv, publicKey: pub}, nil
+	if cfg.PrivateStore == nil {
+		cfg.PrivateStore = storage.NewMemoryStore()
+	}
+	return &Service{cfg: cfg, db: cfg.Database, users: map[string]User{}, merchants: map[string]*Merchant{}, sessions: map[string]*session{}, oauth: map[string]oauthState{}, store: cfg.PrivateStore, privateKey: priv, publicKey: pub}, nil
 }
 
 func loadKeys(cfg Config) (*rsa.PrivateKey, *rsa.PublicKey, error) {
@@ -267,6 +274,17 @@ func (s *Service) finishOAuth(state, code string) (User, string, error) {
 	if profileRes.StatusCode != http.StatusOK || json.NewDecoder(io.LimitReader(profileRes.Body, 1<<20)).Decode(&profile) != nil || !profile.EmailVerified || profile.Email == "" {
 		return User{}, "", errors.New("google email is not verified")
 	}
+	if s.db != nil {
+		user, err := s.loginWithGoogleDB(profile.ID, profile.Email, profile.FirstName, profile.LastName, profile.Name, profile.Picture, profile.EmailVerified)
+		if err != nil {
+			return User{}, "", errors.New("could not persist Google identity")
+		}
+		s.mu.Lock()
+		s.users[user.ID] = user
+		s.merchants[user.ID] = &Merchant{Status: StatusIncomplete}
+		s.mu.Unlock()
+		return user, flow.Next, nil
+	}
 	return s.LoginWithGoogleNames(profile.ID, profile.Email, profile.FirstName, profile.LastName, profile.Name, profile.Picture, profile.EmailVerified), flow.Next, nil
 }
 func (s *Service) LoginWithGoogle(providerID, email, name, picture string, verified bool) User {
@@ -286,7 +304,7 @@ func splitName(name string) (string, string) {
 func (s *Service) LoginWithGoogleNames(providerID, email, firstName, lastName, name, picture string, verified bool) User {
 	_ = providerID
 	if s.db != nil {
-		if user, err := s.loginWithGoogleDB(email, firstName, lastName, name, picture, verified); err == nil {
+		if user, err := s.loginWithGoogleDB(providerID, email, firstName, lastName, name, picture, verified); err == nil {
 			s.mu.Lock()
 			s.users[user.ID] = user
 			if _, exists := s.merchants[user.ID]; !exists {
@@ -324,9 +342,17 @@ func (s *Service) StartSession(userID string, c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	s.mu.Lock()
-	s.sessions[hash(token)] = &session{UserID: userID, FamilyID: family, TokenHash: hash(token), ExpiresAt: time.Now().Add(s.cfg.RefreshTTL)}
-	s.mu.Unlock()
+	expiresAt := time.Now().Add(s.cfg.RefreshTTL)
+	if s.db != nil {
+		_, err = s.db.Exec(`INSERT INTO refresh_tokens (token_hash, user_id, family_id, jti, expires_at, user_agent, ip_hash) VALUES ($1, $2::uuid, $3, $4, $5, $6, $7)`, hash(token), userID, family, uuid.NewString(), expiresAt, c.Get("User-Agent"), hash(s.cfg.IPHashSalt+c.IP()))
+		if err != nil {
+			return err
+		}
+	} else {
+		s.mu.Lock()
+		s.sessions[hash(token)] = &session{UserID: userID, FamilyID: family, TokenHash: hash(token), ExpiresAt: expiresAt}
+		s.mu.Unlock()
+	}
 	csrf, err := randomString(24)
 	if err != nil {
 		return err
@@ -407,6 +433,9 @@ func (s *Service) Refresh(c *fiber.Ctx) (string, error) {
 		return "", errors.New("unauthorized")
 	}
 	h := hash(raw)
+	if s.db != nil {
+		return s.refreshDB(c, h)
+	}
 	s.mu.Lock()
 	old, ok := s.sessions[h]
 	if !ok || old.Revoked || time.Now().After(old.ExpiresAt) {
@@ -425,17 +454,59 @@ func (s *Service) Refresh(c *fiber.Ctx) (string, error) {
 	c.Cookie(&fiber.Cookie{Name: s.cfg.RefreshCookieName, Value: token, HTTPOnly: true, Secure: secure, SameSite: "Strict", Path: "/", MaxAge: int(s.cfg.RefreshTTL.Seconds())})
 	return s.issueAccess(old.UserID)
 }
+
+func (s *Service) refreshDB(c *fiber.Ctx, tokenHash string) (string, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return "", err
+	}
+	defer tx.Rollback()
+	var userID, familyID string
+	var expiresAt time.Time
+	var revokedAt sql.NullTime
+	err = tx.QueryRow(`SELECT user_id::text, family_id, expires_at, revoked_at FROM refresh_tokens WHERE token_hash = $1 FOR UPDATE`, tokenHash).Scan(&userID, &familyID, &expiresAt, &revokedAt)
+	if err != nil {
+		return "", errors.New("unauthorized")
+	}
+	if revokedAt.Valid || time.Now().After(expiresAt) {
+		_, _ = tx.Exec(`UPDATE refresh_tokens SET revoked_at = COALESCE(revoked_at, now()) WHERE family_id = $1`, familyID)
+		_ = tx.Commit()
+		return "", errors.New("unauthorized")
+	}
+	newToken, err := randomString(48)
+	if err != nil {
+		return "", err
+	}
+	newHash := hash(newToken)
+	if _, err = tx.Exec(`UPDATE refresh_tokens SET revoked_at = now(), replaced_by_hash = $2 WHERE token_hash = $1`, tokenHash, newHash); err != nil {
+		return "", err
+	}
+	if _, err = tx.Exec(`INSERT INTO refresh_tokens (token_hash, user_id, family_id, jti, expires_at, user_agent, ip_hash) VALUES ($1, $2::uuid, $3, $4, $5, $6, $7)`, newHash, userID, familyID, uuid.NewString(), time.Now().Add(s.cfg.RefreshTTL), c.Get("User-Agent"), hash(s.cfg.IPHashSalt+c.IP())); err != nil {
+		return "", err
+	}
+	if err = tx.Commit(); err != nil {
+		return "", err
+	}
+	secure := s.cfg.CookieSecure || s.cfg.Environment == "production"
+	c.Cookie(&fiber.Cookie{Name: s.cfg.RefreshCookieName, Value: newToken, HTTPOnly: true, Secure: secure, SameSite: "Strict", Path: "/", MaxAge: int(s.cfg.RefreshTTL.Seconds())})
+	return s.issueAccess(userID)
+}
+
 func (s *Service) Logout(c *fiber.Ctx) {
 	raw := c.Cookies(s.cfg.RefreshCookieName)
-	s.mu.Lock()
-	if current := s.sessions[hash(raw)]; current != nil {
-		for _, item := range s.sessions {
-			if item.FamilyID == current.FamilyID {
-				item.Revoked = true
+	if s.db != nil {
+		_, _ = s.db.Exec(`UPDATE refresh_tokens SET revoked_at = COALESCE(revoked_at, now()) WHERE family_id = (SELECT family_id FROM refresh_tokens WHERE token_hash = $1)`, hash(raw))
+	} else {
+		s.mu.Lock()
+		if current := s.sessions[hash(raw)]; current != nil {
+			for _, item := range s.sessions {
+				if item.FamilyID == current.FamilyID {
+					item.Revoked = true
+				}
 			}
 		}
+		s.mu.Unlock()
 	}
-	s.mu.Unlock()
 	c.ClearCookie(s.cfg.RefreshCookieName, s.cfg.CSRFCookieName)
 }
 
@@ -489,7 +560,21 @@ func (s *Service) LoginRedirect(userID, requested string) string {
 	case StatusPending, StatusRejected, StatusApproved, StatusSuspended:
 		return "/" + locale + "/merchant/status"
 	default:
-		return requested
+		me, err := s.Current(userID)
+		if err != nil || me.Merchant.Profile == nil {
+			return "/" + locale + "/onboarding/personal"
+		}
+		if me.Merchant.Shop == nil {
+			return "/" + locale + "/onboarding/shop"
+		}
+		found := map[string]bool{}
+		for _, document := range me.Merchant.Documents {
+			found[document.Type] = true
+		}
+		if !found["id_front"] || !found["id_back"] || !found["commercial_register"] {
+			return "/" + locale + "/onboarding/documents"
+		}
+		return "/" + locale + "/onboarding/review"
 	}
 }
 func NormalizePhone(value string) (string, error) {
@@ -575,17 +660,53 @@ func (s *Service) SaveShop(userID string, in Shop) (Shop, map[string]string) {
 	}
 	if in.RegisterExpiresOn == "" {
 		fields["register_expires_on"] = "register expiry is required"
+	} else if expires, err := time.Parse("2006-01-02", in.RegisterExpiresOn); err != nil || expires.Before(time.Now().UTC().Truncate(24*time.Hour)) {
+		fields["register_expires_on"] = "register expiry must be a valid future date"
 	}
 	if len(fields) > 0 {
 		return in, fields
 	}
+	slug := slugify(in.Slug, slugify(in.Name, "shop-"+userID[:8]))
+	if s.db != nil {
+		var existingSlug string
+		var edits int
+		err := s.db.QueryRow(`SELECT slug, slug_edits FROM merchant_shops WHERE user_id = $1::uuid`, userID).Scan(&existingSlug, &edits)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return in, map[string]string{"shop": "could not load shop information"}
+		}
+		if err == nil && existingSlug != slug {
+			if edits >= 1 {
+				return in, map[string]string{"slug": "slug can only be edited once before verification"}
+			}
+			edits++
+		}
+		var conflict bool
+		if err := s.db.QueryRow(`SELECT EXISTS (SELECT 1 FROM merchant_shops WHERE slug = $1 AND user_id <> $2::uuid)`, slug, userID).Scan(&conflict); err != nil {
+			return in, map[string]string{"shop": "could not validate shop slug"}
+		}
+		if conflict {
+			slug += "-" + userID[:6]
+		}
+		in.Slug, in.SlugEdits = slug, edits
+		_, err = s.db.Exec(`INSERT INTO merchant_shops (user_id, name, slug, category_id, description, wilaya_id, city, address, phone, whatsapp, register_number, register_expires_on, slug_edits) VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) ON CONFLICT (user_id) DO UPDATE SET name = EXCLUDED.name, slug = EXCLUDED.slug, category_id = EXCLUDED.category_id, description = EXCLUDED.description, wilaya_id = EXCLUDED.wilaya_id, city = EXCLUDED.city, address = EXCLUDED.address, phone = EXCLUDED.phone, whatsapp = EXCLUDED.whatsapp, register_number = EXCLUDED.register_number, register_expires_on = EXCLUDED.register_expires_on, slug_edits = EXCLUDED.slug_edits, updated_at = now()`, userID, strings.TrimSpace(in.Name), in.Slug, strings.TrimSpace(in.CategoryID), strings.TrimSpace(in.Description), strings.TrimSpace(in.WilayaID), strings.TrimSpace(in.City), strings.TrimSpace(in.Address), strings.TrimSpace(in.Phone), strings.TrimSpace(in.WhatsApp), strings.TrimSpace(in.RegisterNumber), in.RegisterExpiresOn, in.SlugEdits)
+		if err != nil {
+			return in, map[string]string{"shop": "could not save shop information"}
+		}
+		s.mu.Lock()
+		if m := s.merchants[userID]; m != nil {
+			m.Shop = &in
+		}
+		s.mu.Unlock()
+		return in, nil
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	m := s.merchants[userID]
-	slug := slugify(in.Slug, slugify(in.Name, "shop-"+userID[:8]))
+	if m == nil {
+		return in, map[string]string{"shop": "merchant not found"}
+	}
 	if m.Shop != nil && m.Shop.Slug != slug && m.Shop.SlugEdits >= 1 {
-		fields["slug"] = "slug can only be edited once before verification"
-		return in, fields
+		return in, map[string]string{"slug": "slug can only be edited once before verification"}
 	}
 	for id, other := range s.merchants {
 		if id != userID && other.Shop != nil && other.Shop.Slug == slug {
@@ -601,12 +722,6 @@ func (s *Service) SaveShop(userID string, in Shop) (Shop, map[string]string) {
 		}
 	}
 	in.Slug, in.SlugEdits = slug, edits
-	if s.db != nil {
-		_, err := s.db.Exec(`INSERT INTO merchant_shops (user_id, name, slug, category_id, description, wilaya_id, city, address, phone, whatsapp, register_number, register_expires_on, slug_edits) VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) ON CONFLICT (user_id) DO UPDATE SET name = EXCLUDED.name, slug = EXCLUDED.slug, category_id = EXCLUDED.category_id, description = EXCLUDED.description, wilaya_id = EXCLUDED.wilaya_id, city = EXCLUDED.city, address = EXCLUDED.address, phone = EXCLUDED.phone, whatsapp = EXCLUDED.whatsapp, register_number = EXCLUDED.register_number, register_expires_on = EXCLUDED.register_expires_on, slug_edits = EXCLUDED.slug_edits, updated_at = now()`, userID, strings.TrimSpace(in.Name), in.Slug, strings.TrimSpace(in.CategoryID), strings.TrimSpace(in.Description), strings.TrimSpace(in.WilayaID), strings.TrimSpace(in.City), strings.TrimSpace(in.Address), strings.TrimSpace(in.Phone), strings.TrimSpace(in.WhatsApp), strings.TrimSpace(in.RegisterNumber), in.RegisterExpiresOn, in.SlugEdits)
-		if err != nil {
-			return in, map[string]string{"shop": "could not save shop information"}
-		}
-	}
 	m.Shop = &in
 	return in, nil
 }
@@ -639,26 +754,44 @@ func (s *Service) SaveDocument(userID, typ string, data []byte) (Document, error
 	}
 	sum := sha256.Sum256(data)
 	doc := Document{ID: uuid.NewString(), Type: typ, ContentType: ct, SHA256: hex.EncodeToString(sum[:]), Size: int64(len(data)), CreatedAt: time.Now().UTC(), ObjectKey: "merchants/" + userID + "/" + typ + "/" + uuid.NewString() + "." + ext, Bytes: append([]byte(nil), data...)}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := s.store.Put(ctx, doc.ObjectKey, doc.ContentType, data); err != nil {
+		return Document{}, fmt.Errorf("store private document: %w", err)
+	}
 	if s.db != nil {
 		tx, err := s.db.Begin()
 		if err != nil {
+			_ = s.store.Delete(ctx, doc.ObjectKey)
 			return Document{}, err
 		}
 		defer tx.Rollback()
-		if _, err = tx.Exec(`DELETE FROM merchant_documents WHERE user_id = $1::uuid AND document_type = $2`, userID, typ); err != nil {
-			return Document{}, err
+		var oldKey string
+		queryErr := tx.QueryRow(`SELECT storage_key FROM merchant_documents WHERE user_id = $1::uuid AND document_type = $2 FOR UPDATE`, userID, typ).Scan(&oldKey)
+		if queryErr != nil && !errors.Is(queryErr, sql.ErrNoRows) {
+			_ = s.store.Delete(ctx, doc.ObjectKey)
+			return Document{}, queryErr
 		}
-		if _, err = tx.Exec(`INSERT INTO merchant_documents (id, user_id, document_type, content_type, byte_size, sha256, storage_key) VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7)`, doc.ID, userID, doc.Type, doc.ContentType, doc.Size, doc.SHA256, doc.ObjectKey); err != nil {
+		if _, err = tx.Exec(`INSERT INTO merchant_documents (id, user_id, document_type, content_type, byte_size, sha256, storage_key, created_at) VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7, $8) ON CONFLICT (user_id, document_type) DO UPDATE SET id = EXCLUDED.id, content_type = EXCLUDED.content_type, byte_size = EXCLUDED.byte_size, sha256 = EXCLUDED.sha256, storage_key = EXCLUDED.storage_key, created_at = EXCLUDED.created_at`, doc.ID, userID, doc.Type, doc.ContentType, doc.Size, doc.SHA256, doc.ObjectKey, doc.CreatedAt); err != nil {
+			_ = s.store.Delete(ctx, doc.ObjectKey)
 			return Document{}, err
 		}
 		if err = tx.Commit(); err != nil {
+			_ = s.store.Delete(ctx, doc.ObjectKey)
 			return Document{}, err
 		}
+		if oldKey != "" && oldKey != doc.ObjectKey {
+			_ = s.store.Delete(ctx, oldKey)
+		}
+		doc.Bytes = nil
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	m := s.merchants[userID]
 	if m == nil {
+		if s.db != nil {
+			return doc, nil
+		}
 		return Document{}, errors.New("merchant not found")
 	}
 	filtered := m.Documents[:0]
@@ -668,7 +801,6 @@ func (s *Service) SaveDocument(userID, typ string, data []byte) (Document, error
 		}
 	}
 	m.Documents = append(filtered, doc)
-	s.objects[doc.ObjectKey] = doc.Bytes
 	return doc, nil
 }
 func (s *Service) Submit(userID string, accepted bool) (Merchant, map[string]string) {

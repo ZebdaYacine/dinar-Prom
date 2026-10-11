@@ -2,12 +2,15 @@ package server
 
 import (
 	"database/sql"
+	"errors"
 	"log/slog"
 	"os"
 
 	"github.com/dinar-dz/dinar/internal/auth"
 	"github.com/dinar-dz/dinar/internal/config"
 	"github.com/dinar-dz/dinar/internal/guest"
+	"github.com/dinar-dz/dinar/internal/offers"
+	"github.com/dinar-dz/dinar/internal/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -17,7 +20,7 @@ import (
 )
 
 func New(cfg config.Config, log *slog.Logger) *fiber.App {
-	app := fiber.New(fiber.Config{DisableStartupMessage: true, BodyLimit: 8<<20 + 1024})
+	app := fiber.New(fiber.Config{DisableStartupMessage: true, BodyLimit: 9 << 20})
 	app.Use(requestid.New())
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
@@ -25,7 +28,15 @@ func New(cfg config.Config, log *slog.Logger) *fiber.App {
 		Output:     os.Stdout,
 		TimeFormat: "2006-01-02T15:04:05Z07:00",
 	}))
-	app.Use(cors.New(cors.Config{AllowOrigins: "http://localhost:8180,http://localhost:3143", AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-Request-ID"}))
+	allowedOrigins := cfg.AllowedOrigins
+	if allowedOrigins == "" {
+		allowedOrigins = "http://127.0.0.1:8180,http://localhost:8180,http://127.0.0.1:3143,http://localhost:3143"
+	}
+	csrfHeader := cfg.CSRFHeaderName
+	if csrfHeader == "" {
+		csrfHeader = "X-CSRF-Token"
+	}
+	app.Use(cors.New(cors.Config{AllowOrigins: allowedOrigins, AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-Request-ID, " + csrfHeader, AllowCredentials: true}))
 
 	app.Get("/healthz", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "ok"})
@@ -49,11 +60,30 @@ func New(cfg config.Config, log *slog.Logger) *fiber.App {
 		}
 	}
 	guest.NewCatalog(cfg.AppURL, database).Register(v1)
-	identity, err := auth.New(auth.Config{Database: database, AppURL: cfg.AppURL, Environment: cfg.Environment, GoogleClientID: cfg.GoogleClientID, GoogleClientSecret: cfg.GoogleClientSecret, GoogleRedirectURL: cfg.GoogleRedirectURL, Issuer: cfg.JWTIssuer, Audience: cfg.JWTAudience, RefreshCookieName: cfg.RefreshCookieName, CSRFCookieName: cfg.CSRFCookieName, CSRFHeaderName: cfg.CSRFHeaderName, JWTPrivateKeyFile: cfg.JWTPrivateKeyFile, JWTPublicKeyFile: cfg.JWTPublicKeyFile, CookieSecure: cfg.CookieSecure, AccessTTL: cfg.JWTAccessTTL, RefreshTTL: cfg.JWTRefreshTTL})
+	privateStore := storage.PrivateStore(storage.NewMemoryStore())
+	publicStore := storage.ObjectStore(storage.NewMemoryStore())
+	var storageErr error
+	if cfg.MinIOEndpoint != "" {
+		privateStore, storageErr = storage.NewS3Store(storage.S3Config{Endpoint: cfg.MinIOEndpoint, AccessKey: cfg.MinIOAccessKey, SecretKey: cfg.MinIOSecretKey, Bucket: cfg.MinIOBucketPrivate, Region: cfg.MinIORegion, UseSSL: cfg.MinIOUseSSL})
+		if storageErr == nil {
+			publicStore, storageErr = storage.NewS3Store(storage.S3Config{Endpoint: cfg.MinIOEndpoint, AccessKey: cfg.MinIOAccessKey, SecretKey: cfg.MinIOSecretKey, Bucket: cfg.MinIOBucketPublic, Region: cfg.MinIORegion, UseSSL: cfg.MinIOUseSSL})
+		}
+	} else if cfg.Environment == "production" {
+		storageErr = errors.New("private object storage is required in production")
+	}
+	identity, err := auth.New(auth.Config{Database: database, AppURL: cfg.AppURL, Environment: cfg.Environment, GoogleClientID: cfg.GoogleClientID, GoogleClientSecret: cfg.GoogleClientSecret, GoogleRedirectURL: cfg.GoogleRedirectURL, Issuer: cfg.JWTIssuer, Audience: cfg.JWTAudience, RefreshCookieName: cfg.RefreshCookieName, CSRFCookieName: cfg.CSRFCookieName, CSRFHeaderName: cfg.CSRFHeaderName, JWTPrivateKeyFile: cfg.JWTPrivateKeyFile, JWTPublicKeyFile: cfg.JWTPublicKeyFile, CookieSecure: cfg.CookieSecure, AccessTTL: cfg.JWTAccessTTL, RefreshTTL: cfg.JWTRefreshTTL, IPHashSalt: cfg.IPHashSalt, PrivateStore: privateStore})
+	if storageErr != nil {
+		err = storageErr
+	} else if cfg.Environment == "production" && database == nil {
+		err = errors.New("merchant identity database is required in production")
+	}
 	if err != nil {
 		log.Error("authentication disabled", "error", err)
 	} else {
 		auth.Register(v1, identity)
+		if database != nil {
+			offers.Register(v1, identity, offers.New(database, publicStore, cfg.PublicMediaURL))
+		}
 	}
 
 	return app

@@ -5,7 +5,7 @@
 | **Epic**     | 2 — Merchant Identity & Verification                             |
 | **Stories**  | US-M01 … US-M05 (5)                                               |
 | **Priority** | Critical                                                        |
-| **Status**   | 🟠 In Progress                                                   |
+| **Status**   | ✅ Shipped                                                       |
 | **Surfaces** | `apps/web/app/(auth)/login`, `onboarding/personal`, `shop`, `documents`, `review` |
 | **API**      | Google auth, `GET /me`, `PUT /merchant/profile`, `PUT /merchant/shop`, `POST /merchant/documents`, `POST /merchant/submit` |
 
@@ -50,14 +50,14 @@ Google login → personal → shop → documents → review → pending → appr
 
 ## 7. Technical notes
 
-Store only session hashes; use secure cookies; detect MIME by magic bytes; return signed five-minute document URLs only to admins; audit every document view; apply CSRF except the external OAuth callback.
+Store only refresh-token hashes; rotate token families with reuse detection; use secure cookies; detect MIME by magic bytes; return signed five-minute document URLs only after an admin Casbin check; audit every document view; apply CSRF to cookie-authenticated refresh/logout operations while merchant writes require the in-memory bearer token; validate OAuth state and PKCE.
 
 ## 8. Subtasks
 
-- [~] T2.1 Implement OAuth, sessions, cookies, logout, and role middleware.
-- [~] T2.2 Build onboarding wizard, autosave, validation, resume, and consent.
-- [~] T2.3 Implement private upload/storage, replacement, hashing, and rejection flow.
-- [ ] T2.4 Add status emails and authorization/integration tests.
+- [x] T2.1 Implement OAuth, sessions, cookies, logout, and role middleware.
+- [x] T2.2 Build onboarding wizard, autosave, validation, resume, and consent.
+- [x] T2.3 Implement private upload/storage, replacement, hashing, and rejection flow.
+- [x] T2.4 Add status emails and authorization/integration tests.
 
 ## 9. Success metrics
 

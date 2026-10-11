@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -49,7 +52,7 @@ func Register(v1 fiber.Router, service *Service) {
 		}
 		return success(c, me)
 	})
-	merchant := protected.Group("/merchant")
+	merchant := protected.Group("/merchant", service.RequirePermission("merchant_identity", "write"))
 	merchant.Put("/profile", jsonBody(service.saveProfile))
 	merchant.Put("/shop", jsonBody(service.saveShop))
 	merchant.Post("/documents", func(c *fiber.Ctx) error {
@@ -89,6 +92,20 @@ func Register(v1 fiber.Router, service *Service) {
 		}
 		return success(c, merchantData)
 	})
+	protected.Get("/admin/merchant-documents/:id/url", service.RequirePermission("merchant_documents", "read"), func(c *fiber.Ctx) error {
+		actorID := c.Locals("user_id").(string)
+		result, err := service.SignedDocumentURL(c.UserContext(), actorID, c.Params("id"), fmt.Sprint(c.Locals("requestid")), c.IP())
+		switch {
+		case errors.Is(err, ErrForbidden):
+			return errorJSON(c, fiber.StatusForbidden, "forbidden", "document access is not allowed", nil)
+		case errors.Is(err, sql.ErrNoRows):
+			return errorJSON(c, fiber.StatusNotFound, "not_found", "document not found", nil)
+		case err != nil:
+			return errorJSON(c, fiber.StatusInternalServerError, "internal", "could not create document link", nil)
+		default:
+			return success(c, result)
+		}
+	})
 }
 
 func (s *Service) RequireAuth() fiber.Handler {
@@ -102,6 +119,15 @@ func (s *Service) RequireAuth() fiber.Handler {
 			return errorJSON(c, 401, "unauthorized", "authentication required", nil)
 		}
 		c.Locals("user_id", userID)
+		return c.Next()
+	}
+}
+func (s *Service) RequirePermission(resource, action string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID, ok := c.Locals("user_id").(string)
+		if !ok || !s.Authorize(userID, resource, action) {
+			return errorJSON(c, fiber.StatusForbidden, "forbidden", "this account cannot perform that action", nil)
+		}
 		return c.Next()
 	}
 }

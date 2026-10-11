@@ -96,7 +96,8 @@
     "whatsapp": "واتساب",
     "registerNumber": "رقم السجل التجاري",
     "registerExpiry": "انتهاء السجل التجاري",
-    "autosave": "يتم حفظ المسودة تلقائياً عند المتابعة.",
+    "autosave": "تُحفظ المسودة تلقائياً بعد 10 ثوانٍ.",
+    "draftSaved": "تم حفظ المسودة تلقائياً",
     "saving": "جارٍ الحفظ…",
     "continue": "متابعة",
     "next": "التالي",
@@ -130,6 +131,10 @@
     "statusPendingText": "استلمنا ملفك. ستصلك رسالة عند انتهاء فريق Dinar DZ من المراجعة.",
     "statusRejectedTitle": "نحتاج إلى تحديث طلبك",
     "statusRejectedText": "تم رفض الطلب الحالي. راجع معلوماتك ووثائقك ثم أرسل طلباً جديداً.",
+    "rejectionReason": "السبب",
+    "rejectedDocument": "الوثيقة المطلوب استبدالها: {document}",
+    "replaceRejectedDocument": "استبدل الوثيقة المرفوضة: {document}.",
+    "replacementRequired": "يجب رفع نسخة جديدة من هذه الوثيقة.",
     "tryAgain": "حاول مجدداً",
     "retryStarted": "يمكنك الآن تحديث بياناتك وإعادة الإرسال",
     "statusApprovedTitle": "تم قبول حسابك",
@@ -143,5 +148,15 @@
     "promotionCreateText": "مساحة إنشاء العروض قيد التجهيز وستكون متاحة قريباً.",
     "backHome": "العودة للرئيسية"
     ,"viewStatus": "عرض الحالة"
+  },
+  "merchantOffers": {
+    "dashboardTitle": "عروضي", "dashboardText": "أنشئ عروض متجرك وأرسلها للمراجعة وتحكم في حالتها.", "newOffer": "عرض جديد", "viewStats": "عرض الإحصائيات", "emptyTitle": "لا توجد عروض", "emptyText": "أنشئ مسودة عرض للبدء.",
+    "editorTitle": "محرر العرض", "loading": "جارٍ التحميل…", "loadError": "تعذر تحميل العروض.", "actionError": "تعذر إتمام العملية.", "actionDone": "تم تحديث العرض.", "validationError": "أكمل الحقول المطلوبة.",
+    "titleAr": "العنوان بالعربية", "titleFr": "العنوان بالفرنسية", "descriptionAr": "الوصف بالعربية", "descriptionFr": "الوصف بالفرنسية", "category": "الفئة", "subcategory": "الفئة الفرعية", "priceBefore": "السعر قبل التخفيض (دج)", "priceAfter": "السعر بعد التخفيض (دج)", "startsAt": "تاريخ البداية", "endsAt": "تاريخ النهاية", "wilaya": "الولاية", "city": "البلدية", "address": "العنوان", "whatsapp": "واتساب",
+    "images": "الصور", "imageHint": "من صورة إلى 10 صور JPG أو PNG أو WebP، بحد أقصى 8MB وأبعاد 400×400 على الأقل. الصورة الأولى هي الغلاف.", "addImages": "إضافة صور", "uploading": "جارٍ المعالجة…", "invalidImage": "استخدم صورة JPG أو PNG أو WebP أقل من 8MB.", "uploadError": "تعذرت معالجة الصورة.", "cover": "الغلاف",
+    "autosave": "تُحفظ المسودة تلقائياً بعد 10 ثوانٍ.", "saving": "جارٍ الحفظ…", "saved": "تم حفظ المسودة", "saveError": "تعذر الحفظ التلقائي", "saveDraft": "حفظ", "submit": "إرسال للمراجعة", "submitted": "تم إرسال العرض للمراجعة.", "locked": "هذا العرض مقفل أثناء المراجعة أو بعد الأرشفة.", "approvedEditWarning": "أي تعديل جوهري سيخفي العرض فوراً ويعيده إلى المراجعة.", "rejected": "سبب الرفض",
+    "edit": "تعديل", "pause": "إيقاف مؤقت", "resume": "إعادة النشر", "duplicate": "نسخ", "archive": "أرشفة", "delete": "حذف", "incomplete": "مسودة غير مكتملة",
+    "statsTitle": "إحصائيات العروض", "backDashboard": "العودة للعروض", "offersTotal": "العروض", "views": "مشاهدات", "whatsappClicks": "نقرات واتساب", "last30Days": "نشاط آخر 30 يوماً",
+    "status": {"draft":"مسودة","pending":"قيد المراجعة","approved":"منشور","rejected":"مرفوض","paused":"متوقف","archived":"مؤرشف","removed":"مسحوب"}
   }
 }

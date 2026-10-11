@@ -1,11 +1,13 @@
 package guest
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"net/url"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -35,6 +37,8 @@ type Catalog struct {
 	reports        map[string]time.Time
 	reportWindows  map[string][]time.Time
 	analytics      *analyticsStore
+	database       *sql.DB
+	mediaBase      string
 }
 
 type offer struct {
@@ -66,6 +70,7 @@ type offer struct {
 	Address        string
 	WhatsApp       string
 	Phone          string
+	Shop           shop
 }
 
 type category struct {
@@ -212,7 +217,15 @@ func NewCatalog(appURL string, databases ...*sql.DB) *Catalog {
 	if len(databases) > 0 && databases[0] != nil {
 		analytics = newAnalyticsStore(databases[0])
 	}
-	return &Catalog{appURL: strings.TrimRight(appURL, "/"), offers: offers, shops: shops, categories: categories, brands: brands, wilayas: wilayas, views: make(map[string]time.Time), whatsappClicks: make(map[string]time.Time), reports: make(map[string]time.Time), reportWindows: make(map[string][]time.Time), analytics: analytics}
+	mediaBase := strings.TrimRight(os.Getenv("DEMO_MEDIA_BASE_URL"), "/")
+	if mediaBase == "" {
+		mediaBase = "http://localhost:9100/dinar-public"
+	}
+	var database *sql.DB
+	if len(databases) > 0 {
+		database = databases[0]
+	}
+	return &Catalog{appURL: strings.TrimRight(appURL, "/"), offers: offers, shops: shops, categories: categories, brands: brands, wilayas: wilayas, views: make(map[string]time.Time), whatsappClicks: make(map[string]time.Time), reports: make(map[string]time.Time), reportWindows: make(map[string][]time.Time), analytics: analytics, database: database, mediaBase: mediaBase}
 }
 
 func (c *Catalog) Register(router fiber.Router) {
@@ -234,8 +247,9 @@ func (c *Catalog) ListOffers(ctx *fiber.Ctx) error {
 	query := parseQuery(ctx)
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	items := make([]OfferSummary, 0, len(c.offers))
-	for _, item := range c.offers {
+	available := c.currentOffers(ctx.UserContext())
+	items := make([]OfferSummary, 0, len(available))
+	for _, item := range available {
 		if !c.isPublic(item, time.Now().UTC()) || !matches(item, query) {
 			continue
 		}
@@ -263,7 +277,7 @@ func (c *Catalog) GetSimilar(ctx *fiber.Ctx) error {
 		return errorResponse(ctx, fiber.StatusNotFound, "not_found", "Offer not found")
 	}
 	items := make([]OfferSummary, 0, 3)
-	for _, candidate := range c.offers {
+	for _, candidate := range c.currentOffers(ctx.UserContext()) {
 		if candidate.ID == item.ID || !c.isPublic(candidate, time.Now().UTC()) || candidate.Category.ID != item.Category.ID {
 			continue
 		}
@@ -383,11 +397,20 @@ func (c *Catalog) GetShop(ctx *fiber.Ctx) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	value, ok := c.shops[ctx.Params("slug")]
+	available := c.currentOffers(ctx.UserContext())
+	if !ok {
+		for _, item := range available {
+			if item.Shop.Slug == ctx.Params("slug") {
+				value, ok = item.Shop, true
+				break
+			}
+		}
+	}
 	if !ok {
 		return errorResponse(ctx, fiber.StatusNotFound, "not_found", "Shop not found")
 	}
 	items := make([]OfferSummary, 0)
-	for _, item := range c.offers {
+	for _, item := range available {
 		if item.ShopSlug == value.Slug && c.isPublic(item, time.Now().UTC()) {
 			items = append(items, c.summary(item, ctx.Get("Accept-Language")))
 		}
@@ -454,7 +477,7 @@ func (c *Catalog) isPublic(item offer, now time.Time) bool {
 
 func (c *Catalog) findPublic(id string) (offer, bool) {
 	now := time.Now().UTC()
-	for _, item := range c.offers {
+	for _, item := range c.currentOffers(context.Background()) {
 		if item.ID == id && c.isPublic(item, now) {
 			return item, true
 		}
@@ -471,7 +494,15 @@ func (c *Catalog) summary(item offer, language string) OfferSummary {
 		wilaya = item.WilayaAr
 		city = item.CityAr
 	}
-	return OfferSummary{ID: item.ID, Title: title, Category: item.Category, Subcategory: item.Subcategory, Brand: item.Brand, Shop: c.shops[item.ShopSlug], Wilaya: wilaya, WilayaCode: item.WilayaCode, City: city, CityID: item.CityID, AudienceGender: item.AudienceGender, AgeMin: item.AgeMin, AgeMax: item.AgeMax, CoverURL: item.Images[0].URL800, BeforePrice: item.BeforePrice, Price: item.Price, DiscountPercent: discount(item.BeforePrice, item.Price), StartsAt: item.StartsAt, EndsAt: item.EndsAt, Verified: c.shops[item.ShopSlug].Verified}
+	shopValue := item.Shop
+	if shopValue.Slug == "" {
+		shopValue = c.shops[item.ShopSlug]
+	}
+	cover := ""
+	if len(item.Images) > 0 {
+		cover = item.Images[0].URL800
+	}
+	return OfferSummary{ID: item.ID, Title: title, Category: item.Category, Subcategory: item.Subcategory, Brand: item.Brand, Shop: shopValue, Wilaya: wilaya, WilayaCode: item.WilayaCode, City: city, CityID: item.CityID, AudienceGender: item.AudienceGender, AgeMin: item.AgeMin, AgeMax: item.AgeMax, CoverURL: cover, BeforePrice: item.BeforePrice, Price: item.Price, DiscountPercent: discount(item.BeforePrice, item.Price), StartsAt: item.StartsAt, EndsAt: item.EndsAt, Verified: shopValue.Verified}
 }
 
 func (c *Catalog) details(item offer, language string) OfferDetails {
@@ -481,7 +512,7 @@ func (c *Catalog) details(item offer, language string) OfferDetails {
 		description = item.DescriptionAr
 	}
 	detail := OfferDetails{OfferSummary: title, Description: description, Address: item.Address, Phone: item.Phone, WhatsAppURL: c.whatsappURL(item), Images: item.Images, Similar: make([]OfferSummary, 0)}
-	for _, candidate := range c.offers {
+	for _, candidate := range c.currentOffers(context.Background()) {
 		if candidate.ID != item.ID && c.isPublic(candidate, time.Now().UTC()) && candidate.Category.ID == item.Category.ID {
 			detail.Similar = append(detail.Similar, c.summary(candidate, language))
 		}

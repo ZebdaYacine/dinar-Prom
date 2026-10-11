@@ -2,10 +2,13 @@ package auth
 
 import (
 	"database/sql"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -27,6 +30,10 @@ func TestDatabasePersistenceSmoke(t *testing.T) {
 	}
 	user := service.LoginWithGoogleNames("google-id", email, "DB", "Smoke", "DB Smoke", "https://lh3.googleusercontent.com/avatar", true)
 	defer db.Exec(`DELETE FROM users WHERE id = $1::uuid`, user.ID)
+	defer db.Exec(`DELETE FROM notification_outbox WHERE recipient = $1`, email)
+	if !service.Authorize(user.ID, "merchant_identity", "write") || service.Authorize(user.ID, "merchant_documents", "read") {
+		t.Fatal("expected PostgreSQL Casbin policies to allow merchant onboarding and deny private document review")
+	}
 
 	if _, fields := service.SaveProfile(user.ID, Profile{FirstName: "DB", LastName: "Smoke", PhoneE164: "0551234567", WilayaID: "16", Address: "Algiers"}); len(fields) != 0 {
 		t.Fatalf("profile was not persisted: %v", fields)
@@ -58,4 +65,56 @@ func TestDatabasePersistenceSmoke(t *testing.T) {
 	if me.User.Picture == "" || me.Merchant.Status != StatusPending || me.Merchant.Profile == nil || me.Merchant.Shop == nil {
 		t.Fatalf("expected persisted avatar, pending status, profile, and shop: %+v", me)
 	}
+
+	startApp := fiber.New()
+	startApp.Post("/start", func(c *fiber.Ctx) error { return service.StartSession(user.ID, c) })
+	startResponse, err := startApp.Test(httptest.NewRequest(http.MethodPost, "/start", nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldRefresh := responseCookie(startResponse, service.cfg.RefreshCookieName)
+	csrf := responseCookie(startResponse, service.cfg.CSRFCookieName)
+	if oldRefresh == nil || csrf == nil {
+		t.Fatal("expected refresh and CSRF cookies")
+	}
+	refreshApp := fiber.New()
+	Register(refreshApp.Group("/api/v1"), secondLogin)
+	refreshRequest := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", nil)
+	refreshRequest.AddCookie(oldRefresh)
+	refreshRequest.AddCookie(csrf)
+	refreshRequest.Header.Set(secondLogin.cfg.CSRFHeaderName, csrf.Value)
+	refreshResponse, err := refreshApp.Test(refreshRequest)
+	if err != nil || refreshResponse.StatusCode != fiber.StatusOK {
+		t.Fatalf("expected persisted refresh rotation, status=%d err=%v", refreshResponse.StatusCode, err)
+	}
+	newRefresh := responseCookie(refreshResponse, secondLogin.cfg.RefreshCookieName)
+	if newRefresh == nil || newRefresh.Value == oldRefresh.Value {
+		t.Fatal("expected a rotated refresh token")
+	}
+
+	reuseRequest := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", nil)
+	reuseRequest.AddCookie(oldRefresh)
+	reuseRequest.AddCookie(csrf)
+	reuseRequest.Header.Set(secondLogin.cfg.CSRFHeaderName, csrf.Value)
+	reuseResponse, _ := refreshApp.Test(reuseRequest)
+	if reuseResponse.StatusCode != fiber.StatusUnauthorized {
+		t.Fatalf("expected refresh-token reuse to be rejected, got %d", reuseResponse.StatusCode)
+	}
+	newRequest := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", nil)
+	newRequest.AddCookie(newRefresh)
+	newRequest.AddCookie(csrf)
+	newRequest.Header.Set(secondLogin.cfg.CSRFHeaderName, csrf.Value)
+	newResponse, _ := refreshApp.Test(newRequest)
+	if newResponse.StatusCode != fiber.StatusUnauthorized {
+		t.Fatalf("expected token family revocation after reuse, got %d", newResponse.StatusCode)
+	}
+}
+
+func responseCookie(response *http.Response, name string) *http.Cookie {
+	for _, cookie := range response.Cookies() {
+		if cookie.Name == name {
+			return cookie
+		}
+	}
+	return nil
 }

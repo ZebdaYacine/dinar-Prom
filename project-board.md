@@ -24,7 +24,7 @@ ordered delivery plan while keeping unresolved production decisions visible.
 | R0 | EPIC-08 | PostgreSQL, SQLBoiler, Redis, API contracts, auth foundation | EPIC-00 | Backlog |
 | R0 | EPIC-09 | Next.js shell, Arabic RTL, branding, splash, responsive UI | EPIC-00 | Backlog |
 | R0 | EPIC-10 | Docker, Caddy, CI, security, backups, smoke tests | EPIC-08 | Backlog |
-| R1 | EPIC-02 | Google identity, merchant onboarding, private documents | EPIC-08, EPIC-09 | Backlog |
+| R1 | EPIC-02 | Google identity, merchant onboarding, private documents | EPIC-08, EPIC-09 | Done |
 | R2 | EPIC-01 | Guest discovery, search, offer details, reporting, sharing | EPIC-08, EPIC-09 | In Progress |
 | R2 | EPIC-03 | Merchant offers, MinIO media, moderation lifecycle | EPIC-02, EPIC-08 | Backlog |
 | R2 | EPIC-05 | Admin review, role guards, audit | EPIC-02, EPIC-03, EPIC-08 | Backlog |
@@ -50,6 +50,12 @@ view, not a second source of acceptance criteria.
 The current guest slice is running locally at `http://127.0.0.1:8180/ar`. It includes the public SSR routes, offer filters, Arabic search normalization, shop/detail pages, share and WhatsApp actions, report protection, and API smoke coverage. The catalog is currently an isolated in-memory adapter so that EPIC-08 can replace its data source with the PostgreSQL `public_offers` view without changing the public contract. EPIC-01 therefore remains In Progress until durable persistence, query-time visibility from PostgreSQL, and Playwright coverage are complete.
 
 Evidence is maintained in `jira.md` under **EPIC-01 execution status**.
+
+## EPIC-02 completion checkpoint
+
+Merchant identity now runs on PostgreSQL and private MinIO storage, with durable refresh-token rotation, database role policies, audited five-minute document links, transactional status-email delivery, ten-second draft autosave, resume routing, and rejected-document replacement. API/web checks and live PostgreSQL/MinIO smoke tests pass against the local Docker stack.
+
+Evidence is maintained in `jira.md` under **EPIC-02 execution status**.
 
 ## Next ready queue
 

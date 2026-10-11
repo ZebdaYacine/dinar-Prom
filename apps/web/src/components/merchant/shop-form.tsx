@@ -7,6 +7,7 @@ import type {Category, Wilaya} from '@/lib/api';
 import {getMe, saveShop} from '@/lib/auth-client';
 import {Combobox} from '@/components/ui/combobox';
 import {useToast} from '@/components/ui/toast-provider';
+import {useDraftAutosave} from '@/hooks/use-draft-autosave';
 
 const initialForm = {name: '', slug: '', category_id: '', description: '', wilaya_id: '', city: '', address: '', phone: '', whatsapp: '', register_number: '', register_expires_on: ''};
 
@@ -17,6 +18,7 @@ export function ShopForm({locale, categories, wilayas}: {locale: string; categor
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState('');
   const [locked, setLocked] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({...current, [key]: value}));
   const selectedWilaya = useMemo(() => wilayas.find((wilaya) => wilaya.code === form.wilaya_id), [wilayas, form.wilaya_id]);
   const categoryOptions = categories.map((category) => ({value: category.id, label: locale === 'ar' ? category.name_ar : category.name_fr}));
@@ -28,8 +30,11 @@ export function ShopForm({locale, categories, wilayas}: {locale: string; categor
       const status = data.merchant.verification_status;
       setLocked(status === 'pending' || status === 'approved' || status === 'suspended');
       if (data.merchant.shop) setForm({...initialForm, ...data.merchant.shop});
+      setHydrated(true);
     }).catch(() => undefined);
   }, []);
+
+  const autosave = useDraftAutosave(form, hydrated && !locked, async (draft) => (await saveShop(draft)).ok);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -57,6 +62,7 @@ export function ShopForm({locale, categories, wilayas}: {locale: string; categor
     <label>{t('address')}<input disabled={locked} value={form.address} onChange={(event) => update('address', event.target.value)} /></label>
     <div className="form-grid"><label>{t('phone')}<input disabled={locked} type="tel" value={form.phone} onChange={(event) => update('phone', event.target.value)} /></label><label>{t('whatsapp')}<input disabled={locked} type="tel" value={form.whatsapp} onChange={(event) => update('whatsapp', event.target.value)} /></label></div>
     <div className="form-grid"><label>{t('registerNumber')}<input disabled={locked} required value={form.register_number} onChange={(event) => update('register_number', event.target.value)} /></label><label>{t('registerExpiry')}<input disabled={locked} required type="date" value={form.register_expires_on} onChange={(event) => update('register_expires_on', event.target.value)} /></label></div>
+    {!locked && <p className="autosave">{autosave === 'saving' ? t('saving') : autosave === 'saved' ? t('draftSaved') : t('autosave')}</p>}
     {error && <p className="form-error">{error}</p>}
     <button className="button button-primary">{t('next')}</button>
   </form>;

@@ -96,7 +96,8 @@
     "whatsapp": "WhatsApp",
     "registerNumber": "Registre de commerce",
     "registerExpiry": "Expiration du registre",
-    "autosave": "Votre brouillon est conservé lorsque vous continuez.",
+    "autosave": "Le brouillon est enregistré automatiquement après 10 secondes.",
+    "draftSaved": "Brouillon enregistré automatiquement",
     "saving": "Enregistrement…",
     "continue": "Continuer",
     "next": "Suivant",
@@ -130,6 +131,10 @@
     "statusPendingText": "Votre dossier est bien reçu. Vous serez informé après la vérification de l’équipe Dinar DZ.",
     "statusRejectedTitle": "Votre demande doit être mise à jour",
     "statusRejectedText": "La demande actuelle a été refusée. Corrigez vos informations et envoyez-la à nouveau.",
+    "rejectionReason": "Motif",
+    "rejectedDocument": "Document à remplacer : {document}",
+    "replaceRejectedDocument": "Remplacez le document refusé : {document}.",
+    "replacementRequired": "Une nouvelle version de ce document est requise.",
     "tryAgain": "Réessayer",
     "retryStarted": "Vous pouvez maintenant corriger et renvoyer votre demande",
     "statusApprovedTitle": "Votre compte est approuvé",
@@ -143,5 +148,15 @@
     "promotionCreateText": "L’espace de création des offres sera bientôt disponible.",
     "backHome": "Retour à l’accueil"
     ,"viewStatus": "Voir le statut"
+  },
+  "merchantOffers": {
+    "dashboardTitle": "Mes offres", "dashboardText": "Créez, soumettez et gérez les offres de votre boutique.", "newOffer": "Nouvelle offre", "viewStats": "Voir les statistiques", "emptyTitle": "Aucune offre", "emptyText": "Créez un brouillon pour commencer.",
+    "editorTitle": "Éditeur d’offre", "loading": "Chargement…", "loadError": "Impossible de charger les offres.", "actionError": "L’action n’a pas pu être terminée.", "actionDone": "Offre mise à jour.", "validationError": "Complétez les champs obligatoires.",
+    "titleAr": "Titre en arabe", "titleFr": "Titre en français", "descriptionAr": "Description en arabe", "descriptionFr": "Description en français", "category": "Catégorie", "subcategory": "Sous-catégorie", "priceBefore": "Prix avant (DZD)", "priceAfter": "Prix réduit (DZD)", "startsAt": "Début", "endsAt": "Fin", "wilaya": "Wilaya", "city": "Commune", "address": "Adresse", "whatsapp": "WhatsApp",
+    "images": "Images", "imageHint": "1 à 10 images JPG, PNG ou WebP, 8 Mo maximum et 400×400 minimum. La première image est la couverture.", "addImages": "Ajouter des images", "uploading": "Traitement…", "invalidImage": "Utilisez une image JPG, PNG ou WebP de moins de 8 Mo.", "uploadError": "L’image n’a pas pu être traitée.", "cover": "Couverture",
+    "autosave": "Le brouillon est enregistré automatiquement après 10 secondes.", "saving": "Enregistrement…", "saved": "Brouillon enregistré", "saveError": "Échec de l’enregistrement automatique", "saveDraft": "Enregistrer", "submit": "Envoyer en révision", "submitted": "Offre envoyée en révision.", "locked": "Cette offre est verrouillée pendant la révision ou après son archivage.", "approvedEditWarning": "Toute modification matérielle masque immédiatement cette offre et la renvoie en révision.", "rejected": "Motif du refus",
+    "edit": "Modifier", "pause": "Mettre en pause", "resume": "Republier", "duplicate": "Dupliquer", "archive": "Archiver", "delete": "Supprimer", "incomplete": "Brouillon incomplet",
+    "statsTitle": "Statistiques des offres", "backDashboard": "Retour aux offres", "offersTotal": "Offres", "views": "vues", "whatsappClicks": "clics WhatsApp", "last30Days": "Activité des 30 derniers jours",
+    "status": {"draft":"Brouillon","pending":"En révision","approved":"Publiée","rejected":"Refusée","paused":"En pause","archived":"Archivée","removed":"Retirée"}
   }
 }

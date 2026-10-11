@@ -2,6 +2,7 @@ package auth
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"strings"
 	"time"
@@ -28,7 +29,7 @@ func (s *Service) applicationLocked(userID string) bool {
 // loginWithGoogleDB upserts the Google identity and creates its verification
 // record. The picture URL is refreshed on every login so changes made in the
 // Google account are reflected in the Dinar header on the next session.
-func (s *Service) loginWithGoogleDB(email, firstName, lastName, name, picture string, verified bool) (User, error) {
+func (s *Service) loginWithGoogleDB(providerID, email, firstName, lastName, name, picture string, verified bool) (User, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return User{}, err
@@ -36,22 +37,27 @@ func (s *Service) loginWithGoogleDB(email, firstName, lastName, name, picture st
 	defer tx.Rollback()
 
 	var user User
-	err = tx.QueryRow(`SELECT id::text, email, name, first_name, last_name, picture_url, role, email_verified FROM users WHERE lower(email) = lower($1)`, email).Scan(
-		&user.ID, &user.Email, &user.Name, &user.FirstName, &user.LastName, &user.Picture, &user.Role, &user.EmailVerified,
+	var currentSubject sql.NullString
+	err = tx.QueryRow(`SELECT id::text, email, name, first_name, last_name, picture_url, role, email_verified, google_subject FROM users WHERE google_subject = $1 OR lower(email) = lower($2) ORDER BY (google_subject = $1) DESC LIMIT 1`, providerID, email).Scan(
+		&user.ID, &user.Email, &user.Name, &user.FirstName, &user.LastName, &user.Picture, &user.Role, &user.EmailVerified, &currentSubject,
 	)
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
 		user = User{ID: uuid.NewString(), Email: strings.ToLower(strings.TrimSpace(email)), Role: RoleMerchant}
-		if _, err = tx.Exec(`INSERT INTO users (id, email, name, first_name, last_name, picture_url, email_verified, role) VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8)`, user.ID, user.Email, name, firstName, lastName, picture, verified, RoleMerchant); err != nil {
+		if _, err = tx.Exec(`INSERT INTO users (id, email, name, first_name, last_name, picture_url, email_verified, role, google_subject) VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9)`, user.ID, user.Email, name, firstName, lastName, picture, verified, RoleMerchant, providerID); err != nil {
 			return User{}, err
 		}
 	case err != nil:
 		return User{}, err
 	default:
-		if _, err = tx.Exec(`UPDATE users SET name = $2, first_name = $3, last_name = $4, picture_url = $5, email_verified = $6, updated_at = now() WHERE id = $1::uuid`, user.ID, name, firstName, lastName, picture, verified); err != nil {
+		if currentSubject.Valid && currentSubject.String != "" && currentSubject.String != providerID {
+			return User{}, errors.New("Google identity does not match this account")
+		}
+		if _, err = tx.Exec(`UPDATE users SET email = lower($2), name = $3, first_name = $4, last_name = $5, picture_url = $6, email_verified = $7, google_subject = $8, updated_at = now() WHERE id = $1::uuid`, user.ID, email, name, firstName, lastName, picture, verified, providerID); err != nil {
 			return User{}, err
 		}
 	}
+	user.Email = strings.ToLower(strings.TrimSpace(email))
 	user.Name, user.FirstName, user.LastName, user.Picture, user.EmailVerified = name, firstName, lastName, picture, verified
 	if user.Role == "" {
 		user.Role = RoleMerchant
@@ -117,8 +123,13 @@ func (s *Service) currentDB(userID string) (Me, error) {
 
 func (s *Service) submitDB(userID string, accepted bool) (Merchant, map[string]string) {
 	fields := map[string]string{}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return Merchant{}, map[string]string{"database": "could not start submission"}
+	}
+	defer tx.Rollback()
 	var status string
-	if err := s.db.QueryRow(`SELECT status FROM merchant_verifications WHERE user_id = $1::uuid`, userID).Scan(&status); err == nil && (status == StatusPending || status == StatusApproved || status == StatusSuspended) {
+	if err := tx.QueryRow(`SELECT status FROM merchant_verifications WHERE user_id = $1::uuid FOR UPDATE`, userID).Scan(&status); err == nil && (status == StatusPending || status == StatusApproved || status == StatusSuspended) {
 		me, currentErr := s.currentDB(userID)
 		if currentErr != nil {
 			return Merchant{}, map[string]string{"application": "submitted application data is locked"}
@@ -127,10 +138,10 @@ func (s *Service) submitDB(userID string, accepted bool) (Merchant, map[string]s
 	}
 	var hasProfile, hasShop bool
 	var documentCount int
-	if err := s.db.QueryRow(`SELECT EXISTS (SELECT 1 FROM merchant_profiles WHERE user_id = $1::uuid), EXISTS (SELECT 1 FROM merchant_shops WHERE user_id = $1::uuid)`, userID).Scan(&hasProfile, &hasShop); err != nil {
+	if err := tx.QueryRow(`SELECT EXISTS (SELECT 1 FROM merchant_profiles WHERE user_id = $1::uuid), EXISTS (SELECT 1 FROM merchant_shops WHERE user_id = $1::uuid)`, userID).Scan(&hasProfile, &hasShop); err != nil {
 		fields["database"] = "could not load onboarding data"
 	}
-	if err := s.db.QueryRow(`SELECT count(*) FROM merchant_documents WHERE user_id = $1::uuid AND document_type IN ('id_front', 'id_back', 'commercial_register')`, userID).Scan(&documentCount); err != nil {
+	if err := tx.QueryRow(`SELECT count(DISTINCT document_type) FROM merchant_documents WHERE user_id = $1::uuid AND document_type IN ('id_front', 'id_back', 'commercial_register')`, userID).Scan(&documentCount); err != nil {
 		fields["database"] = "could not load verification documents"
 	}
 	if !hasProfile {
@@ -154,8 +165,19 @@ func (s *Service) submitDB(userID string, accepted bool) (Merchant, map[string]s
 	}
 
 	now := time.Now().UTC()
-	_, err := s.db.Exec(`INSERT INTO merchant_verifications (user_id, status, consent_accepted_at, updated_at) VALUES ($1::uuid, $2, $3, now()) ON CONFLICT (user_id) DO UPDATE SET status = EXCLUDED.status, consent_accepted_at = EXCLUDED.consent_accepted_at, rejection_reason = '', rejection_document = '', updated_at = now()`, userID, StatusPending, now)
+	_, err = tx.Exec(`INSERT INTO merchant_verifications (user_id, status, consent_accepted_at, updated_at) VALUES ($1::uuid, $2, $3, now()) ON CONFLICT (user_id) DO UPDATE SET status = EXCLUDED.status, consent_accepted_at = EXCLUDED.consent_accepted_at, rejection_reason = '', rejection_document = '', updated_at = now()`, userID, StatusPending, now)
 	if err != nil {
+		return Merchant{}, map[string]string{"submission": "could not save the application"}
+	}
+	var email, name string
+	if err = tx.QueryRow(`SELECT email, name FROM users WHERE id = $1::uuid`, userID).Scan(&email, &name); err != nil {
+		return Merchant{}, map[string]string{"submission": "could not queue the status email"}
+	}
+	payload, _ := json.Marshal(map[string]string{"status": StatusPending, "name": name})
+	if _, err = tx.Exec(`INSERT INTO notification_outbox (id, kind, recipient, payload) VALUES ($1::uuid, 'merchant_verification_status', $2, $3::jsonb)`, uuid.NewString(), email, string(payload)); err != nil {
+		return Merchant{}, map[string]string{"submission": "could not queue the status email"}
+	}
+	if err = tx.Commit(); err != nil {
 		return Merchant{}, map[string]string{"submission": "could not save the application"}
 	}
 	me, err := s.currentDB(userID)

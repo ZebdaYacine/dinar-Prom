@@ -30,7 +30,7 @@ not contradict the baseline below.
 |---|---|---|---|
 | PRD-00 | Scope, ownership, dependencies, P0 gate | Aligned | Open production choices remain release gates |
 | PRD-01 | Guest routes, public visibility, search, SEO, reports | Aligned | Implement against the public-offer query only |
-| PRD-02 | OAuth, JWT/session boundary, onboarding, private documents | Aligned | Add authorization and document-access tests |
+| PRD-02 | OAuth, JWT/session boundary, onboarding, private documents | Aligned and implemented | Keep SMTP credentials and legal retention policy as production release gates |
 | PRD-03 | Offer state machine, media processing, MinIO boundaries | Aligned | Enforce server-side validation and moderation transitions |
 | PRD-04 | Trial, 4,000 DZD subscription, Chargily, manual proof | Aligned | Confirm live Chargily contract before production |
 | PRD-05 | Casbin admin roles, queues, signed viewers, audit | Aligned | Keep deny-by-default policies and audit sensitive reads |
