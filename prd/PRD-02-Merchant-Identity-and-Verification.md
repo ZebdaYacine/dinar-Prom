@@ -5,7 +5,7 @@
 | **Epic**     | 2 — Merchant Identity & Verification                             |
 | **Stories**  | US-M01 … US-M05 (5)                                               |
 | **Priority** | Critical                                                        |
-| **Status**   | 🟡 Planned                                                       |
+| **Status**   | 🟠 In Progress                                                   |
 | **Surfaces** | `apps/web/app/(auth)/login`, `onboarding/personal`, `shop`, `documents`, `review` |
 | **API**      | Google auth, `GET /me`, `PUT /merchant/profile`, `PUT /merchant/shop`, `POST /merchant/documents`, `POST /merchant/submit` |
 
@@ -54,9 +54,9 @@ Store only session hashes; use secure cookies; detect MIME by magic bytes; retur
 
 ## 8. Subtasks
 
-- [ ] T2.1 Implement OAuth, sessions, cookies, logout, and role middleware.
-- [ ] T2.2 Build onboarding wizard, autosave, validation, resume, and consent.
-- [ ] T2.3 Implement private upload/storage, replacement, hashing, and rejection flow.
+- [~] T2.1 Implement OAuth, sessions, cookies, logout, and role middleware.
+- [~] T2.2 Build onboarding wizard, autosave, validation, resume, and consent.
+- [~] T2.3 Implement private upload/storage, replacement, hashing, and rejection flow.
 - [ ] T2.4 Add status emails and authorization/integration tests.
 
 ## 9. Success metrics

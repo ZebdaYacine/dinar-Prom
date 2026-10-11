@@ -6,6 +6,7 @@ import {BottomNav} from '@/components/bottom-nav';
 import {Footer} from '@/components/footer';
 import {SplashScreen} from '@/components/splash-screen';
 import {routing} from '@/i18n/routing';
+import {ToastProvider} from '@/components/ui/toast-provider';
 
 export default async function LocaleLayout({
   children,
@@ -25,11 +26,13 @@ export default async function LocaleLayout({
   return (
     <div lang={locale} dir={direction}>
       <NextIntlClientProvider messages={messages}>
+        <ToastProvider>
         <Header locale={locale} />
         <SplashScreen locale={locale} />
         <main>{children}</main>
         <Footer locale={locale} />
         <BottomNav locale={locale} />
+        </ToastProvider>
       </NextIntlClientProvider>
     </div>
   );

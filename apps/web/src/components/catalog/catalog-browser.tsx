@@ -99,8 +99,8 @@ export function CatalogBrowser({locale, categories, wilayas, brands, offers, ini
     <div className="catalog-main">
       <CategoryRail categories={categories} locale={locale} selectedID={filters.category} selectedSubcategory={filters.subcategory} onSelectCategory={selectCategory} onSelectSubcategory={selectSubcategory} />
       {filters.subcategory && <BrandRail brands={availableBrands} locale={locale} category={filters.category ?? ''} subcategory={filters.subcategory} selectedBrand={filters.brand} onSelectBrand={selectBrand} />}
-      <OfferSection title={latestTitle} offers={latest} locale={locale} />
       <OfferSection title={endingSoonTitle} offers={endingSoon} locale={locale} />
+      <OfferSection title={latestTitle} offers={latest} locale={locale} />
       <Pagination locale={locale} page={currentPage} totalPages={totalPages} onSelect={(nextPage) => setFilters((current) => ({...current, page: String(nextPage)}))} />
     </div>
   </div>;

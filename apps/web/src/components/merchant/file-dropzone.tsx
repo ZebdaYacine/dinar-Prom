@@ -1,0 +1,9 @@
+'use client';
+
+import {useRef, useState} from 'react';
+
+export function FileDropzone({label, hint, invalidFile, file, onChange, error, disabled = false}: {label: string; hint: string; invalidFile: string; file: File | null; onChange: (file: File | null) => void; error?: string; disabled?: boolean}) {
+  const inputRef = useRef<HTMLInputElement>(null); const [dragging,setDragging]=useState(false); const [localError,setLocalError]=useState(''); const accept=['image/jpeg','image/png','image/webp','application/pdf'];
+  const choose=(candidate:File|null)=>{if(!candidate)return;if(!accept.includes(candidate.type)||candidate.size>8*1024*1024){setLocalError(invalidFile);onChange(null);return}setLocalError('');onChange(candidate)};
+  return <div className={`file-dropzone${dragging?' is-dragging':''}${file?' has-file':''}${disabled?' is-disabled':''}`} onDragOver={(event)=>{if (!disabled) { event.preventDefault(); setDragging(true); }}} onDragLeave={()=>setDragging(false)} onDrop={(event)=>{if (!disabled) { event.preventDefault(); setDragging(false); choose(event.dataTransfer.files[0]??null); }}}><input ref={inputRef} hidden type="file" accept={accept.join(',')} disabled={disabled} onChange={(event)=>choose(event.target.files?.[0]??null)}/><button type="button" className="file-drop-button" disabled={disabled} onClick={()=>inputRef.current?.click()}><span className="upload-icon" aria-hidden="true">{disabled ? '✓' : '↑'}</span><span><strong>{file?.name ?? label}</strong><small>{file ? `${(file.size/1024/1024).toFixed(2)} MB` : hint}</small></span></button>{file&& !disabled&&<button type="button" className="file-remove" onClick={()=>{onChange(null);setLocalError('');if(inputRef.current)inputRef.current.value='';}}>×</button>}{(error||localError)&&<small className="form-error">{error||localError}</small>}</div>;
+}

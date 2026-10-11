@@ -19,7 +19,7 @@ This file converts [`prd/prd.md`](prd/prd.md), [`userstory.md`](userstory.md), a
 |---|---|---|---|---|---|
 | EPIC-00 | Product program and release planning | PRD-00 | Critical | — | Done |
 | EPIC-01 | Guest experience | PRD-01 | High | EPIC-08, EPIC-09 | Done |
-| EPIC-02 | Merchant identity and verification | PRD-02 | Critical | EPIC-08, EPIC-09 | Backlog |
+| EPIC-02 | Merchant identity and verification | PRD-02 | Critical | EPIC-08, EPIC-09 | In Progress |
 | EPIC-03 | Merchant offers and media | PRD-03 | Critical | EPIC-02, EPIC-08 | Backlog |
 | EPIC-04 | Trial, billing, and payments | PRD-04 | Critical | EPIC-03, EPIC-08 | Backlog |
 | EPIC-05 | Admin review and audit | PRD-05 | Critical | EPIC-02, EPIC-03, EPIC-08 | Backlog |
@@ -50,6 +50,18 @@ The guest experience is implemented and deployed locally. Public catalogue reads
 | T1.3 | Implement share, WhatsApp, analytics, reports, and rate limits | Done | Web Share/clipboard fallback, phone fallback, hashed visitor deduplication, PostgreSQL event/report persistence through `000008_guest_analytics`, report validation, duplicate protection, and rate limits verified by live smoke checks |
 | T1.4 | Add guest SEO and Playwright flow | Done | Canonical/alternate/OG/Twitter metadata, Offer JSON-LD, `sitemap.xml`, `robots.txt`, and `apps/web/e2e/guest-experience.spec.ts`; both browser journeys pass against local Docker |
 | EPIC-01 | Guest experience | Done | `go test ./...`, web typecheck/lint/Vitest/build, Playwright (2 passed), PostgreSQL migration verification, and local health/SEO/guest smoke checks pass |
+
+## 2.3 EPIC-02 execution status
+
+The first merchant identity vertical slice is implemented and verified locally. Google OAuth state/PKCE construction, verified-email handling, rotating HttpOnly refresh sessions, CSRF protection, JWT access validation, merchant profile/shop validation, private-document validation, consent, and onboarding routes are present. Production completion still requires wiring the repository to PostgreSQL/MinIO, loading Casbin policies from the database, and delivering status emails through the worker/SMTP module.
+
+| ID | Task | Status | Evidence |
+|---|---|---|---|
+| T2.1 | Implement Google OAuth, sessions, cookies, logout, and roles | In Progress | `apps/api/internal/auth/{service.go,http.go}`: state + PKCE, verified Google userinfo, RS256 access JWT, HttpOnly refresh cookie rotation, CSRF, logout, merchant role scaffold; unit tests pass |
+| T2.2 | Build onboarding wizard, autosave, validation, and consent | In Progress | `apps/web/src/app/[locale]/onboarding/*`, merchant shell, bilingual messages, API validation, consent and pending state; 10-second draft autosave and persistent repository wiring remain |
+| T2.3 | Implement private document storage and validation | In Progress | `000009_merchant_identity` migration, private object-key model, JPEG/PNG/WebP/PDF magic-byte checks, SHA-256, replacement, and 8MB limit; MinIO adapter and DB persistence remain |
+| T2.4 | Add status emails and onboarding authorization tests | Backlog | Submission status is exposed and unit-covered; SMTP templates, worker delivery logs, Casbin-backed role enforcement, and integration authorization tests remain |
+| EPIC-02 | Merchant identity and verification | In Progress | API/web unit and build checks pass; production persistence and email/authorization gates remain open |
 
 ## 3. Story backlog
 

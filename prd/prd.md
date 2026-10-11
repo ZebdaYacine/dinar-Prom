@@ -9,7 +9,7 @@
 | PRD | Epic | Stories | Priority | Status | Primary surfaces |
 |---|---|---|---|---|---|
 | PRD-01 | Guest Experience | US-V01 … US-V07 (7) | High | ✅ Shipped | Public Next.js pages |
-| PRD-02 | Merchant Identity & Verification | US-M01 … US-M05 (5) | Critical | 🟡 Planned | Auth and onboarding |
+| PRD-02 | Merchant Identity & Verification | US-M01 … US-M05 (5) | Critical | 🟠 In Progress | Auth and onboarding |
 | PRD-03 | Merchant Offers | US-O01 … US-O07 (7) | Critical | 🟡 Planned | Merchant dashboard |
 | PRD-04 | Trial, Billing & Payments | US-B01 … US-B08 (8) | Critical | 🟡 Planned | Billing and Chargily |
 | PRD-05 | Admin Review & Audit | US-A01 … US-A04, US-A10 (5) | Critical | 🟡 Planned | Admin review queues |
@@ -149,7 +149,7 @@ Home (/) ──search/filter──▶ /offers ──click card──▶ /offers/
 | **Epic**     | 2 — Merchant Identity & Verification                            |
 | **Stories**  | US-M01 … US-M05 (5)                                             |
 | **Priority** | Critical                                                        |
-| **Status**   | 🟡 Planned                                                      |
+| **Status**   | 🟠 In Progress                                                  |
 | **Surfaces** | `apps/web/app/(auth)/login`, `onboarding/personal`, `shop`, `documents`, `review` |
 | **API**      | `GET /auth/google/login`, `GET /auth/google/callback`, `POST /auth/logout`, `GET /me`, `PUT /merchant/profile`, `PUT /merchant/shop`, `POST /merchant/documents`, `POST /merchant/submit` |
 

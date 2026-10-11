@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/dinar-dz/dinar/internal/auth"
 	"github.com/dinar-dz/dinar/internal/config"
 	"github.com/dinar-dz/dinar/internal/guest"
 	"github.com/gofiber/fiber/v2"
@@ -16,7 +17,7 @@ import (
 )
 
 func New(cfg config.Config, log *slog.Logger) *fiber.App {
-	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	app := fiber.New(fiber.Config{DisableStartupMessage: true, BodyLimit: 8<<20 + 1024})
 	app.Use(requestid.New())
 	app.Use(recover.New())
 	app.Use(logger.New(logger.Config{
@@ -48,6 +49,12 @@ func New(cfg config.Config, log *slog.Logger) *fiber.App {
 		}
 	}
 	guest.NewCatalog(cfg.AppURL, database).Register(v1)
+	identity, err := auth.New(auth.Config{Database: database, AppURL: cfg.AppURL, Environment: cfg.Environment, GoogleClientID: cfg.GoogleClientID, GoogleClientSecret: cfg.GoogleClientSecret, GoogleRedirectURL: cfg.GoogleRedirectURL, Issuer: cfg.JWTIssuer, Audience: cfg.JWTAudience, RefreshCookieName: cfg.RefreshCookieName, CSRFCookieName: cfg.CSRFCookieName, CSRFHeaderName: cfg.CSRFHeaderName, JWTPrivateKeyFile: cfg.JWTPrivateKeyFile, JWTPublicKeyFile: cfg.JWTPublicKeyFile, CookieSecure: cfg.CookieSecure, AccessTTL: cfg.JWTAccessTTL, RefreshTTL: cfg.JWTRefreshTTL})
+	if err != nil {
+		log.Error("authentication disabled", "error", err)
+	} else {
+		auth.Register(v1, identity)
+	}
 
 	return app
 }
