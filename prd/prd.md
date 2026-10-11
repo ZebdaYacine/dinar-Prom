@@ -1,7 +1,7 @@
 # Dinar DZ — PRD Subject Index
 
 > Source of truth: `userstory.md` plus the specifications in `skills/`. This master PRD file is stored in `prd/`.
-> Status is `🟡 Planned` because the current workspace contains the product specification, not the application implementation.
+> Status markers reflect the current implementation and verification state.
 > All API paths below are relative to `/api/v1` unless stated otherwise.
 
 ## Portfolio
@@ -10,7 +10,7 @@
 |---|---|---|---|---|---|
 | PRD-01 | Guest Experience | US-V01 … US-V07 (7) | High | ✅ Shipped | Public Next.js pages |
 | PRD-02 | Merchant Identity & Verification | US-M01 … US-M05 (5) | Critical | ✅ Shipped | Auth and onboarding |
-| PRD-03 | Merchant Offers | US-O01 … US-O07 (7) | Critical | 🟡 Planned | Merchant dashboard |
+| PRD-03 | Merchant Offers | US-O01 … US-O07 (7) | Critical | ✅ Shipped | Merchant dashboard |
 | PRD-04 | Trial, Billing & Payments | US-B01 … US-B08 (8) | Critical | 🟡 Planned | Billing and Chargily |
 | PRD-05 | Admin Review & Audit | US-A01 … US-A04, US-A10 (5) | Critical | 🟡 Planned | Admin review queues |
 | PRD-06 | Admin Catalog, Reports & Ads | US-A05 … US-A09, US-D01 (6) | Medium | 🟡 Planned | Admin operations and ad slots |
@@ -243,7 +243,7 @@ The marketplace needs trustworthy merchant identity without forcing customers to
 | **Epic**     | 3 — Merchant Offers                                             |
 | **Stories**  | US-O01 … US-O07 (7)                                             |
 | **Priority** | Critical                                                        |
-| **Status**   | 🟡 Planned                                                      |
+| **Status**   | ✅ Shipped                                                      |
 | **Surfaces** | `apps/web/app/(merchant)/dashboard/offers`, `offers/new`, `offers/[id]/edit`, `stats` |
 | **API**      | `GET/POST /merchant/offers`, `GET/PUT/DELETE /merchant/offers/:id`, `POST /merchant/offers/:id/media`, `PATCH /merchant/offers/:id/media/order`, `DELETE /merchant/offers/:id/media/:mid`, `POST /merchant/offers/:id/submit`, `POST /merchant/offers/:id/archive`, `POST /merchant/offers/:id/duplicate`, `GET /merchant/stats` |
 

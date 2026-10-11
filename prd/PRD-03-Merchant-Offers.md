@@ -5,7 +5,7 @@
 | **Epic**     | 3 — Merchant Offers                                               |
 | **Stories**  | US-O01 … US-O07 (7)                                               |
 | **Priority** | Critical                                                        |
-| **Status**   | 🟡 Planned                                                       |
+| **Status**   | ✅ Shipped                                                       |
 | **Surfaces** | `apps/web/app/(merchant)/dashboard/offers`, `offers/new`, `offers/[id]/edit`, `stats` |
 | **API**      | `/merchant/offers`, `/merchant/offers/:id`, media endpoints, submit/archive/duplicate, `/merchant/stats` |
 
@@ -56,10 +56,10 @@ The server calculates discounts, validates 1–99 percentages and 180-day maximu
 
 ## 8. Subtasks
 
-- [ ] T3.1 Implement offer state machine, CRUD, ownership, validation, and autosave.
-- [ ] T3.2 Build editor, media uploader, ordering, cover selection, and rejection UI.
-- [ ] T3.3 Implement image processing, cleanup, duplicate, archive, and stats aggregation.
-- [ ] T3.4 Add merchant and moderation E2E flows.
+- [x] T3.1 Implement offer state machine, CRUD, ownership, validation, and autosave.
+- [x] T3.2 Build editor, media uploader, ordering, cover selection, and rejection UI.
+- [x] T3.3 Implement image processing, cleanup, duplicate, archive, and stats aggregation.
+- [x] T3.4 Add merchant and moderation E2E flows.
 
 ## 9. Success metrics
 

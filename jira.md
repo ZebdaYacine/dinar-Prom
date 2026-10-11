@@ -20,7 +20,7 @@ This file converts [`prd/prd.md`](prd/prd.md), [`userstory.md`](userstory.md), a
 | EPIC-00 | Product program and release planning | PRD-00 | Critical | — | Done |
 | EPIC-01 | Guest experience | PRD-01 | High | EPIC-08, EPIC-09 | Done |
 | EPIC-02 | Merchant identity and verification | PRD-02 | Critical | EPIC-08, EPIC-09 | Done |
-| EPIC-03 | Merchant offers and media | PRD-03 | Critical | EPIC-02, EPIC-08 | Backlog |
+| EPIC-03 | Merchant offers and media | PRD-03 | Critical | EPIC-02, EPIC-08 | Done |
 | EPIC-04 | Trial, billing, and payments | PRD-04 | Critical | EPIC-03, EPIC-08 | Backlog |
 | EPIC-05 | Admin review and audit | PRD-05 | Critical | EPIC-02, EPIC-03, EPIC-08 | Backlog |
 | EPIC-06 | Admin catalog, reports, and ads | PRD-06 | Medium | EPIC-05, EPIC-08 | Backlog |
@@ -62,6 +62,18 @@ The merchant identity epic is implemented and verified locally. Google OAuth ide
 | T2.3 | Implement private document storage and validation | Done | Private S3/MinIO adapter, magic-byte validation, SHA-256, atomic metadata replacement, old-object cleanup, 8MB limit, five-minute signed admin URLs, and audited reads |
 | T2.4 | Add status emails and onboarding authorization tests | Done | Transactional `notification_outbox`, bilingual SMTP worker with retries/delivery state, deny-by-default route and method authorization, PostgreSQL/MinIO smoke tests, and role-policy tests |
 | EPIC-02 | Merchant identity and verification | Done | Go suite, web typecheck/lint/Vitest/build, PostgreSQL persistence/session/outbox smoke checks, MinIO signed-download smoke check, migration, and local health check pass |
+
+## 2.4 EPIC-03 execution status
+
+The merchant offers epic is implemented and verified locally. Offer drafts, ownership checks, validation, moderation transitions, media processing, lifecycle actions, public visibility, statistics, and the merchant dashboard are backed by migration `000011_merchant_offers`. Approved merchants return to the locale-specific offers dashboard after OAuth and after verification approval.
+
+| ID | Task | Status | Evidence |
+|---|---|---|---|
+| T3.1 | Implement offer state machine, CRUD, ownership, validation, and autosave | Done | `apps/api/internal/offers/service.go`, `http.go`, migration `000011_merchant_offers` |
+| T3.2 | Build editor, media uploader, ordering, cover selection, and rejection UI | Done | `apps/web/src/components/merchant/offers`, merchant offers routes, media API |
+| T3.3 | Implement image processing, cleanup, duplicate, archive, and stats aggregation | Done | WebP 400/800/1600 processing, private object cleanup, duplicate/archive endpoints, `merchant_offer_stats_daily` |
+| T3.4 | Add merchant and moderation E2E flow | Done | `internal/offers/db_smoke_test.go`, Go suite, web typecheck/lint, Docker smoke verification |
+| EPIC-03 | Merchant offers and media | Done | Draft → pending → approved → public lifecycle and approved-edit re-review path pass against local PostgreSQL |
 
 ## 3. Story backlog
 

@@ -26,7 +26,7 @@ ordered delivery plan while keeping unresolved production decisions visible.
 | R0 | EPIC-10 | Docker, Caddy, CI, security, backups, smoke tests | EPIC-08 | Backlog |
 | R1 | EPIC-02 | Google identity, merchant onboarding, private documents | EPIC-08, EPIC-09 | Done |
 | R2 | EPIC-01 | Guest discovery, search, offer details, reporting, sharing | EPIC-08, EPIC-09 | In Progress |
-| R2 | EPIC-03 | Merchant offers, MinIO media, moderation lifecycle | EPIC-02, EPIC-08 | Backlog |
+| R2 | EPIC-03 | Merchant offers, MinIO media, moderation lifecycle | EPIC-02, EPIC-08 | Done |
 | R2 | EPIC-05 | Admin review, role guards, audit | EPIC-02, EPIC-03, EPIC-08 | Backlog |
 | R3 | EPIC-04 | Trial, Chargily/manual payment, access enforcement | EPIC-03, EPIC-08 | Backlog |
 | R3 | EPIC-07 | Workers, notifications, expiry, SEO, backup/restore | EPIC-08, EPIC-04 | Backlog |
@@ -56,6 +56,12 @@ Evidence is maintained in `jira.md` under **EPIC-01 execution status**.
 Merchant identity now runs on PostgreSQL and private MinIO storage, with durable refresh-token rotation, database role policies, audited five-minute document links, transactional status-email delivery, ten-second draft autosave, resume routing, and rejected-document replacement. API/web checks and live PostgreSQL/MinIO smoke tests pass against the local Docker stack.
 
 Evidence is maintained in `jira.md` under **EPIC-02 execution status**.
+
+## EPIC-03 completion checkpoint
+
+Merchant offers now use PostgreSQL-backed drafts, moderation states, media metadata, WebP processing, private object storage, public visibility through `public_offers`, lifecycle actions, and privacy-safe daily statistics. Approved merchants are routed to the offers dashboard after OAuth return and from the verification result screen. API, web, database smoke, and local Docker checks pass.
+
+Evidence is maintained in `jira.md` under **EPIC-03 execution status**.
 
 ## Next ready queue
 

@@ -41,6 +41,20 @@ func TestLoginRedirectResumesLastIncompleteStep(t *testing.T) {
 	}
 }
 
+func TestLoginRedirectSendsApprovedMerchantToOffers(t *testing.T) {
+	service := testService(t)
+	user, _, _ := service.SeedTestUser("approved@example.com")
+	if err := service.UpdateVerificationStatus(context.Background(), user.ID, StatusApproved, "", ""); err != nil {
+		t.Fatal(err)
+	}
+	if got := service.LoginRedirect(user.ID, "/ar/onboarding/personal"); got != "/ar/merchant/promotions" {
+		t.Fatalf("expected Arabic offers page, got %s", got)
+	}
+	if got := service.LoginRedirect(user.ID, "/fr/onboarding/personal"); got != "/fr/merchant/promotions" {
+		t.Fatalf("expected French offers page, got %s", got)
+	}
+}
+
 func TestMerchantRoutesEnforceRolePolicy(t *testing.T) {
 	service := testService(t)
 	user, token, _ := service.SeedTestUser("policy@example.com")

@@ -545,6 +545,7 @@ func (s *Service) LoginRedirect(userID, requested string) string {
 	if strings.HasPrefix(requested, "/fr/") {
 		locale = "fr"
 	}
+
 	status := StatusIncomplete
 	if s.db != nil {
 		_ = s.db.QueryRow(`SELECT status FROM merchant_verifications WHERE user_id = $1::uuid`, userID).Scan(&status)
@@ -557,7 +558,9 @@ func (s *Service) LoginRedirect(userID, requested string) string {
 		s.mu.RUnlock()
 	}
 	switch status {
-	case StatusPending, StatusRejected, StatusApproved, StatusSuspended:
+	case StatusApproved:
+		return "/" + locale + "/merchant/promotions"
+	case StatusPending, StatusRejected, StatusSuspended:
 		return "/" + locale + "/merchant/status"
 	default:
 		me, err := s.Current(userID)
